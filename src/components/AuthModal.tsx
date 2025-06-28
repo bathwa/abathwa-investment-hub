@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerRole, setRegisterRole] = useState<UserRole>('investor');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [adminKey, setAdminKey] = useState('');
+
+  // Check if email is admin email
+  const isAdminEmail = registerEmail === 'abathwabiz@gmail.com' || registerEmail === 'admin@abathwa.com';
+
+  // Reset form when switching tabs
+  useEffect(() => {
+    if (activeTab === 'register') {
+      setRegisterEmail('');
+      setRegisterPassword('');
+      setRegisterRole('investor');
+      setFirstName('');
+      setLastName('');
+      setPhone('');
+      setAdminKey('');
+    } else {
+      setLoginEmail('');
+      setLoginPassword('');
+    }
+  }, [activeTab]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +88,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(registerEmail, registerPassword, registerRole);
+      // Validate required fields
+      if (!firstName.trim() || !lastName.trim()) {
+        toast({
+          title: "Registration Failed",
+          description: "First name and last name are required.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate admin key if admin email
+      if (isAdminEmail && adminKey !== 'vvv.ndev') {
+        toast({
+          title: "Registration Failed",
+          description: "Invalid admin key. Please enter the correct admin key.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const profileData = {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        phone: phone.trim(),
+        adminKey: isAdminEmail ? adminKey : undefined,
+      };
+
+      const { error } = await signUp(registerEmail, registerPassword, registerRole, profileData);
       
       if (error) {
         toast({
@@ -83,6 +135,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         setRegisterEmail('');
         setRegisterPassword('');
         setRegisterRole('investor');
+        setFirstName('');
+        setLastName('');
+        setPhone('');
+        setAdminKey('');
       }
     } catch (error) {
       toast({
@@ -156,6 +212,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     required
                   />
                 </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first-name">First Name</Label>
+                    <Input
+                      id="first-name"
+                      type="text"
+                      placeholder="First name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last-name">Last Name</Label>
+                    <Input
+                      id="last-name"
+                      type="text"
+                      placeholder="Last name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="Phone number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="register-password">Password</Label>
                   <Input
@@ -167,20 +260,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-role">Role</Label>
-                  <Select value={registerRole} onValueChange={(value: UserRole) => setRegisterRole(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="investor">Investor</SelectItem>
-                      <SelectItem value="entrepreneur">Entrepreneur</SelectItem>
-                      <SelectItem value="service_provider">Service Provider</SelectItem>
-                      <SelectItem value="observer">Observer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
+                {/* Role selection - hidden for admin emails */}
+                {!isAdminEmail && (
+                  <div className="space-y-2">
+                    <Label htmlFor="register-role">Role</Label>
+                    <Select value={registerRole} onValueChange={(value: UserRole) => setRegisterRole(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="investor">Investor</SelectItem>
+                        <SelectItem value="entrepreneur">Entrepreneur</SelectItem>
+                        <SelectItem value="service_provider">Service Provider</SelectItem>
+                        <SelectItem value="observer">Observer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Admin key input - only for admin emails */}
+                {isAdminEmail && (
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-key">Admin Key</Label>
+                    <Input
+                      id="admin-key"
+                      type="password"
+                      placeholder="Enter admin key: 'vvv.ndev'"
+                      value={adminKey}
+                      onChange={(e) => setAdminKey(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the admin key in quotes: 'vvv.ndev'
+                    </p>
+                  </div>
+                )}
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>

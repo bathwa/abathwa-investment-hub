@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,14 +16,142 @@ import {
   FileText,
   Calendar,
   Star,
-  Briefcase
+  Briefcase,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../integrations/supabase/client';
+import { useToast } from '../hooks/use-toast';
+
+interface ServiceStats {
+  totalEarnings: number;
+  activeProjects: number;
+  clientRating: number;
+  servicesOffered: number;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  service_type: string;
+  status: string;
+  budget: number;
+  progress: number;
+  days_left: number;
+  created_at: string;
+}
+
+interface ServiceRequest {
+  id: string;
+  title: string;
+  client_name: string;
+  budget_range: string;
+  deadline: string;
+  status: string;
+  created_at: string;
+}
 
 export const ServiceProviderDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  
+  const [loading, setLoading] = useState(true);
+  const [serviceStats, setServiceStats] = useState<ServiceStats>({
+    totalEarnings: 0,
+    activeProjects: 0,
+    clientRating: 0,
+    servicesOffered: 0
+  });
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Fetch projects
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('service_projects')
+        .select('*')
+        .eq('service_provider_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (projectsError) {
+        console.error('Error fetching projects:', projectsError);
+        toast({
+          title: "Error",
+          description: "Failed to load projects",
+          variant: "destructive",
+        });
+      } else {
+        setProjects(projectsData || []);
+      }
+
+      // Fetch service requests
+      const { data: requestsData, error: requestsError } = await supabase
+        .from('service_requests')
+        .select('*')
+        .eq('service_provider_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (requestsError) {
+        console.error('Error fetching service requests:', requestsError);
+      } else {
+        setServiceRequests(requestsData || []);
+      }
+
+      // Calculate service stats
+      if (projectsData) {
+        const totalEarnings = projectsData.reduce((sum, project) => sum + (project.budget || 0), 0);
+        const activeProjects = projectsData.filter(project => 
+          ['in_progress', 'review'].includes(project.status)
+        ).length;
+        
+        // Get average rating
+        const { data: ratingsData } = await supabase
+          .from('service_ratings')
+          .select('rating')
+          .eq('service_provider_id', user.id);
+        
+        const averageRating = ratingsData && ratingsData.length > 0 
+          ? ratingsData.reduce((sum, rating) => sum + rating.rating, 0) / ratingsData.length
+          : 0;
+        
+        // Get unique services count
+        const uniqueServices = new Set(projectsData.map(project => project.service_type)).size;
+
+        setServiceStats({
+          totalEarnings,
+          activeProjects,
+          clientRating: averageRating,
+          servicesOffered: uniqueServices
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
@@ -31,87 +159,47 @@ export const ServiceProviderDashboard: React.FC = () => {
     navigate(-1);
   };
 
-  const serviceStats = [
-    {
-      title: "Total Earnings",
-      value: "$12,450",
-      change: "+18.2%",
-      icon: DollarSign,
-      color: "text-green-600"
-    },
-    {
-      title: "Active Projects",
-      value: "5",
-      change: "+2",
-      icon: Briefcase,
-      color: "text-blue-600"
-    },
-    {
-      title: "Client Rating",
-      value: "4.8/5",
-      change: "+0.2",
-      icon: Star,
-      color: "text-purple-600"
-    },
-    {
-      title: "Services Offered",
-      value: "8",
-      change: "+1",
-      icon: Target,
-      color: "text-orange-600"
-    }
-  ];
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-  const activeProjects = [
-    {
-      name: "GreenTech Solutions",
-      service: "Financial Advisory",
-      status: "In Progress",
-      budget: "$5,000",
-      progress: 75,
-      daysLeft: 8
-    },
-    {
-      name: "AgriTech Platform",
-      service: "Legal Consultation",
-      status: "Review",
-      budget: "$3,500",
-      progress: 90,
-      daysLeft: 3
-    },
-    {
-      name: "FinTech Startup",
-      service: "Business Strategy",
-      status: "Planning",
-      budget: "$7,200",
-      progress: 25,
-      daysLeft: 15
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'in_progress': return 'default';
+      case 'review': return 'secondary';
+      case 'planning': return 'outline';
+      case 'new': return 'outline';
+      case 'reviewing': return 'secondary';
+      default: return 'outline';
     }
-  ];
+  };
 
-  const serviceRequests = [
-    {
-      title: "Legal Documentation",
-      client: "TechStart Inc",
-      budget: "$2,500 - $4,000",
-      deadline: "2 weeks",
-      status: "New"
-    },
-    {
-      title: "Financial Modeling",
-      client: "EcoVentures",
-      budget: "$3,000 - $5,000",
-      deadline: "1 month",
-      status: "Reviewing"
-    },
-    {
-      title: "Market Research",
-      client: "HealthTech Solutions",
-      budget: "$1,800 - $3,200",
-      deadline: "3 weeks",
-      status: "New"
+  const getStatusDisplayName = (status: string) => {
+    switch (status) {
+      case 'in_progress': return 'In Progress';
+      case 'review': return 'Review';
+      case 'planning': return 'Planning';
+      case 'new': return 'New';
+      case 'reviewing': return 'Reviewing';
+      default: return status;
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading dashboard...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,7 +222,9 @@ export const ServiceProviderDashboard: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold">Service Provider Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">Manage your services and projects</p>
+                  <p className="text-sm text-muted-foreground">
+                    Welcome back, {user?.first_name || user?.email}
+                  </p>
                 </div>
               </div>
             </div>
@@ -144,7 +234,7 @@ export const ServiceProviderDashboard: React.FC = () => {
                 <Bell className="w-4 h-4" />
               </Button>
               <Badge className="bg-teal-100 text-teal-600 border-teal-200">
-                Verified Provider
+                {user?.verification_status === 'verified' ? 'Verified Provider' : 'Service Provider'}
               </Badge>
               <Button 
                 onClick={handleLogout}
@@ -167,24 +257,73 @@ export const ServiceProviderDashboard: React.FC = () => {
 
         {/* Service Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {serviceStats.map((stat, index) => (
-            <Card key={index} className="border-2 card-hover">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <div className={`p-2 rounded-lg bg-background ${stat.color}`}>
-                  <stat.icon className="w-4 h-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold mb-1">{stat.value}</div>
-                <p className="text-xs text-green-600 font-medium">
-                  {stat.change} this month
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Earnings
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-green-600">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{formatCurrency(serviceStats.totalEarnings)}</div>
+              <p className="text-xs text-green-600 font-medium">
+                From {projects.length} projects
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Active Projects
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-blue-600">
+                <Briefcase className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{serviceStats.activeProjects}</div>
+              <p className="text-xs text-blue-600 font-medium">
+                Currently in progress
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Client Rating
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-purple-600">
+                <Star className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{serviceStats.clientRating.toFixed(1)}/5</div>
+              <p className="text-xs text-purple-600 font-medium">
+                Average client rating
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Services Offered
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-orange-600">
+                <Target className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{serviceStats.servicesOffered}</div>
+              <p className="text-xs text-orange-600 font-medium">
+                Different service types
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -193,8 +332,10 @@ export const ServiceProviderDashboard: React.FC = () => {
             <Card className="border-2">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Active Projects</CardTitle>
-                  <CardDescription>Your current client engagements</CardDescription>
+                  <CardTitle>Your Projects</CardTitle>
+                  <CardDescription>
+                    {projects.length === 0 ? 'No projects yet' : 'Your current client engagements'}
+                  </CardDescription>
                 </div>
                 <Button size="sm" className="btn-primary">
                   <Plus className="w-4 h-4 mr-2" />
@@ -202,48 +343,54 @@ export const ServiceProviderDashboard: React.FC = () => {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {activeProjects.map((project, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3">
-                          <h4 className="font-semibold">{project.name}</h4>
-                          <Badge 
-                            variant={
-                              project.status === "In Progress" ? "default" :
-                              project.status === "Review" ? "secondary" : "outline"
-                            }
-                          >
-                            {project.status}
-                          </Badge>
-                        </div>
-                        <div className="mt-2 text-sm text-muted-foreground">
-                          <span>{project.service}</span>
-                          <span className="mx-2">•</span>
-                          <span>Budget: {project.budget}</span>
-                          <span className="mx-2">•</span>
-                          <span>{project.daysLeft} days left</span>
-                        </div>
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span>Progress</span>
-                            <span>{project.progress}%</span>
+                {projects.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Briefcase className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">No projects yet</p>
+                    <Button size="sm" className="btn-primary">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Start Your First Project
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {projects.map((project) => (
+                      <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <h4 className="font-semibold">{project.name}</h4>
+                            <Badge variant={getStatusBadgeVariant(project.status)}>
+                              {getStatusDisplayName(project.status)}
+                            </Badge>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full" 
-                              style={{ width: `${project.progress}%` }}
-                            />
+                          <div className="mt-2 text-sm text-muted-foreground">
+                            <span>{project.service_type}</span>
+                            <span className="mx-2">•</span>
+                            <span>Budget: {formatCurrency(project.budget)}</span>
+                            <span className="mx-2">•</span>
+                            <span>{project.days_left} days left</span>
+                          </div>
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                              <span>Progress</span>
+                              <span>{project.progress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full" 
+                                style={{ width: `${project.progress}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
+                        <Button size="sm" variant="outline">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View
+                        </Button>
                       </div>
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4 mr-2" />
-                        View
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -253,36 +400,45 @@ export const ServiceProviderDashboard: React.FC = () => {
             <Card className="border-2">
               <CardHeader>
                 <CardTitle>Service Requests</CardTitle>
-                <CardDescription>New client inquiries</CardDescription>
+                <CardDescription>
+                  {serviceRequests.length === 0 ? 'No requests yet' : 'New client inquiries'}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {serviceRequests.map((request, index) => (
-                    <div key={index} className="p-3 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{request.title}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {request.status}
-                        </Badge>
+                {serviceRequests.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No service requests yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {serviceRequests.map((request) => (
+                      <div key={request.id} className="p-3 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-sm">{request.title}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {getStatusDisplayName(request.status)}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Client: {request.client_name}
+                        </p>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>Budget: {request.budget_range}</div>
+                          <div>Deadline: {request.deadline}</div>
+                        </div>
+                        <div className="mt-3 flex space-x-2">
+                          <Button size="sm" className="text-xs">
+                            Accept
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-xs">
+                            Decline
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Client: {request.client}
-                      </p>
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <div>Budget: {request.budget}</div>
-                        <div>Deadline: {request.deadline}</div>
-                      </div>
-                      <div className="mt-3 flex space-x-2">
-                        <Button size="sm" className="text-xs">
-                          Accept
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-xs">
-                          Decline
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

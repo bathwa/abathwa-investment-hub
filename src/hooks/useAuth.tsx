@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, role: UserRole) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, role: UserRole, profileData?: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -129,14 +129,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, role: UserRole) => {
+  const signUp = async (email: string, password: string, role: UserRole, profileData?: any) => {
     try {
+      // Check if this is an admin registration
+      const isAdminEmail = email === 'abathwabiz@gmail.com' || email === 'admin@abathwa.com';
+      
+      if (isAdminEmail) {
+        // Validate admin key
+        if (!profileData?.adminKey || profileData.adminKey !== 'vvv.ndev') {
+          return { error: { message: 'Invalid Admin Key. Please enter the correct admin key.' } };
+        }
+        // Force role to super_admin for admin emails
+        role = 'super_admin';
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             role,
+            first_name: profileData?.first_name || '',
+            last_name: profileData?.last_name || '',
+            phone: profileData?.phone || '',
           },
         },
       });
@@ -147,21 +162,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.user) {
         // Create user profile in our users table
+        const userProfileData = {
+          id: data.user.id,
+          email: data.user.email!,
+          full_name: `${profileData?.first_name || ''} ${profileData?.last_name || ''}`.trim(),
+          first_name: profileData?.first_name || '',
+          last_name: profileData?.last_name || '',
+          phone: profileData?.phone || '',
+          role,
+          status: 'pending_verification',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
         const { error: profileError } = await supabase
           .from('users')
-          .insert([
-            {
-              id: data.user.id,
-              email: data.user.email!,
-              role,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-          ]);
+          .insert([userProfileData]);
 
         if (profileError) {
           console.error('Error creating user profile:', profileError);
           return { error: profileError };
+        }
+
+        // Create extended profile if role-specific data is provided
+        if (role === 'investor' || role === 'entrepreneur' || role === 'service_provider') {
+          const extendedProfileData = {
+            user_id: data.user.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          const { error: extendedProfileError } = await supabase
+            .from('user_profiles')
+            .insert([extendedProfileData]);
+
+          if (extendedProfileError) {
+            console.error('Error creating extended profile:', extendedProfileError);
+          }
         }
       }
 

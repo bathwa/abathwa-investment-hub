@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,14 +14,142 @@ import {
   Eye,
   Users,
   FileText,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../integrations/supabase/client';
+import { useToast } from '../hooks/use-toast';
+
+interface BusinessStats {
+  totalFunding: number;
+  activeOpportunities: number;
+  investorsEngaged: number;
+  milestonesCompleted: number;
+}
+
+interface Opportunity {
+  id: string;
+  name: string;
+  status: string;
+  target_amount: number;
+  raised_amount: number;
+  investors_count: number;
+  days_left: number;
+  created_at: string;
+}
+
+interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  created_at: string;
+  status: 'success' | 'info' | 'warning';
+}
 
 export const EntrepreneurDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  
+  const [loading, setLoading] = useState(true);
+  const [businessStats, setBusinessStats] = useState<BusinessStats>({
+    totalFunding: 0,
+    activeOpportunities: 0,
+    investorsEngaged: 0,
+    milestonesCompleted: 0
+  });
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Fetch opportunities
+      const { data: opportunitiesData, error: opportunitiesError } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('entrepreneur_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (opportunitiesError) {
+        console.error('Error fetching opportunities:', opportunitiesError);
+        toast({
+          title: "Error",
+          description: "Failed to load opportunities",
+          variant: "destructive",
+        });
+      } else {
+        setOpportunities(opportunitiesData || []);
+      }
+
+      // Fetch activities
+      const { data: activitiesData, error: activitiesError } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (activitiesError) {
+        console.error('Error fetching activities:', activitiesError);
+      } else {
+        setActivities(activitiesData || []);
+      }
+
+      // Calculate business stats
+      if (opportunitiesData) {
+        const totalFunding = opportunitiesData.reduce((sum, opp) => sum + (opp.raised_amount || 0), 0);
+        const activeOpportunities = opportunitiesData.filter(opp => 
+          ['published', 'funding_in_progress'].includes(opp.status)
+        ).length;
+        
+        // Get unique investors count
+        const { data: investorsData } = await supabase
+          .from('investments')
+          .select('investor_id')
+          .in('opportunity_id', opportunitiesData.map(opp => opp.id));
+        
+        const uniqueInvestors = new Set(investorsData?.map(inv => inv.investor_id) || []).size;
+        
+        // Get milestones count
+        const { data: milestonesData } = await supabase
+          .from('milestones')
+          .select('id')
+          .in('opportunity_id', opportunitiesData.map(opp => opp.id))
+          .eq('status', 'completed');
+
+        setBusinessStats({
+          totalFunding,
+          activeOpportunities,
+          investorsEngaged: uniqueInvestors,
+          milestonesCompleted: milestonesData?.length || 0
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
@@ -29,84 +157,55 @@ export const EntrepreneurDashboard: React.FC = () => {
     navigate(-1);
   };
 
-  const businessStats = [
-    {
-      title: "Total Funding Raised",
-      value: "$450,000",
-      change: "+25.3%",
-      icon: DollarSign,
-      color: "text-green-600"
-    },
-    {
-      title: "Active Opportunities",
-      value: "3",
-      change: "+1",
-      icon: Target,
-      color: "text-blue-600"
-    },
-    {
-      title: "Investors Engaged",
-      value: "24",
-      change: "+8",
-      icon: Users,
-      color: "text-purple-600"
-    },
-    {
-      title: "Milestones Completed",
-      value: "12",
-      change: "+3",
-      icon: Calendar,
-      color: "text-orange-600"
-    }
-  ];
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-  const activeOpportunities = [
-    {
-      name: "GreenTech Solutions",
-      status: "Funding in Progress",
-      target: "$500,000",
-      raised: "$350,000",
-      investors: 18,
-      daysLeft: 15
-    },
-    {
-      name: "AgriTech Platform",
-      status: "Published",
-      target: "$300,000",
-      raised: "$120,000",
-      investors: 12,
-      daysLeft: 30
-    },
-    {
-      name: "FinTech Innovation",
-      status: "Draft",
-      target: "$750,000",
-      raised: "$0",
-      investors: 0,
-      daysLeft: 0
-    }
-  ];
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    return date.toLocaleDateString();
+  };
 
-  const recentActivities = [
-    {
-      type: "Investment Received",
-      description: "New investment of $25,000 in GreenTech Solutions",
-      time: "2 hours ago",
-      status: "success"
-    },
-    {
-      type: "Milestone Completed",
-      description: "Product development phase completed",
-      time: "1 day ago",
-      status: "info"
-    },
-    {
-      type: "Investor Inquiry",
-      description: "New investor interested in AgriTech Platform",
-      time: "3 days ago",
-      status: "warning"
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'funding_in_progress': return 'default';
+      case 'published': return 'secondary';
+      case 'draft': return 'outline';
+      default: return 'outline';
     }
-  ];
+  };
+
+  const getStatusDisplayName = (status: string) => {
+    switch (status) {
+      case 'funding_in_progress': return 'Funding in Progress';
+      case 'published': return 'Published';
+      case 'draft': return 'Draft';
+      default: return status;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading dashboard...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -129,7 +228,9 @@ export const EntrepreneurDashboard: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold">Entrepreneur Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">Manage your ventures and funding</p>
+                  <p className="text-sm text-muted-foreground">
+                    Welcome back, {user?.first_name || user?.email}
+                  </p>
                 </div>
               </div>
             </div>
@@ -139,7 +240,7 @@ export const EntrepreneurDashboard: React.FC = () => {
                 <Bell className="w-4 h-4" />
               </Button>
               <Badge className="bg-orange-100 text-orange-600 border-orange-200">
-                Verified Entrepreneur
+                {user?.verification_status === 'verified' ? 'Verified Entrepreneur' : 'Entrepreneur'}
               </Badge>
               <Button 
                 onClick={handleLogout}
@@ -162,24 +263,73 @@ export const EntrepreneurDashboard: React.FC = () => {
 
         {/* Business Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {businessStats.map((stat, index) => (
-            <Card key={index} className="border-2 card-hover">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <div className={`p-2 rounded-lg bg-background ${stat.color}`}>
-                  <stat.icon className="w-4 h-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold mb-1">{stat.value}</div>
-                <p className="text-xs text-green-600 font-medium">
-                  {stat.change} this month
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Funding Raised
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-green-600">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{formatCurrency(businessStats.totalFunding)}</div>
+              <p className="text-xs text-green-600 font-medium">
+                From {opportunities.length} opportunities
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Active Opportunities
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-blue-600">
+                <Target className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{businessStats.activeOpportunities}</div>
+              <p className="text-xs text-blue-600 font-medium">
+                Currently seeking funding
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Investors Engaged
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-purple-600">
+                <Users className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{businessStats.investorsEngaged}</div>
+              <p className="text-xs text-purple-600 font-medium">
+                Across all opportunities
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Milestones Completed
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-orange-600">
+                <Calendar className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{businessStats.milestonesCompleted}</div>
+              <p className="text-xs text-orange-600 font-medium">
+                Project milestones achieved
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -188,8 +338,10 @@ export const EntrepreneurDashboard: React.FC = () => {
             <Card className="border-2">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Active Opportunities</CardTitle>
-                  <CardDescription>Your current funding campaigns</CardDescription>
+                  <CardTitle>Your Opportunities</CardTitle>
+                  <CardDescription>
+                    {opportunities.length === 0 ? 'No opportunities yet' : 'Your current funding campaigns'}
+                  </CardDescription>
                 </div>
                 <Button size="sm" className="btn-primary">
                   <Plus className="w-4 h-4 mr-2" />
@@ -197,41 +349,47 @@ export const EntrepreneurDashboard: React.FC = () => {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {activeOpportunities.map((opportunity, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3">
-                          <h4 className="font-semibold">{opportunity.name}</h4>
-                          <Badge 
-                            variant={
-                              opportunity.status === "Funding in Progress" ? "default" :
-                              opportunity.status === "Published" ? "secondary" : "outline"
-                            }
-                          >
-                            {opportunity.status}
-                          </Badge>
-                        </div>
-                        <div className="mt-2 text-sm text-muted-foreground">
-                          <span>Target: {opportunity.target}</span>
-                          <span className="mx-2">•</span>
-                          <span>Raised: {opportunity.raised}</span>
-                          <span className="mx-2">•</span>
-                          <span>{opportunity.investors} investors</span>
-                        </div>
-                        {opportunity.daysLeft > 0 && (
-                          <div className="mt-2 text-xs text-orange-600">
-                            {opportunity.daysLeft} days left
+                {opportunities.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">No opportunities created yet</p>
+                    <Button size="sm" className="btn-primary">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Your First Opportunity
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {opportunities.map((opportunity) => (
+                      <div key={opportunity.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <h4 className="font-semibold">{opportunity.name}</h4>
+                            <Badge variant={getStatusBadgeVariant(opportunity.status)}>
+                              {getStatusDisplayName(opportunity.status)}
+                            </Badge>
                           </div>
-                        )}
+                          <div className="mt-2 text-sm text-muted-foreground">
+                            <span>Target: {formatCurrency(opportunity.target_amount)}</span>
+                            <span className="mx-2">•</span>
+                            <span>Raised: {formatCurrency(opportunity.raised_amount)}</span>
+                            <span className="mx-2">•</span>
+                            <span>{opportunity.investors_count} investors</span>
+                          </div>
+                          {opportunity.days_left > 0 && (
+                            <div className="mt-2 text-xs text-orange-600">
+                              {opportunity.days_left} days left
+                            </div>
+                          )}
+                        </div>
+                        <Button size="sm" variant="outline">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View
+                        </Button>
                       </div>
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4 mr-2" />
-                        View
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -241,24 +399,35 @@ export const EntrepreneurDashboard: React.FC = () => {
             <Card className="border-2">
               <CardHeader>
                 <CardTitle>Recent Activities</CardTitle>
-                <CardDescription>Latest updates on your ventures</CardDescription>
+                <CardDescription>
+                  {activities.length === 0 ? 'No recent activity' : 'Latest updates on your ventures'}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${
-                        activity.status === 'success' ? 'bg-green-500' :
-                        activity.status === 'info' ? 'bg-blue-500' : 'bg-orange-500'
-                      }`} />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.type}</p>
-                        <p className="text-xs text-muted-foreground">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                {activities.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No recent activities</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {activities.map((activity) => (
+                      <div key={activity.id} className="flex items-start space-x-3">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                          activity.status === 'success' ? 'bg-green-500' :
+                          activity.status === 'info' ? 'bg-blue-500' : 'bg-orange-500'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{activity.type}</p>
+                          <p className="text-xs text-muted-foreground">{activity.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatTimeAgo(activity.created_at)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

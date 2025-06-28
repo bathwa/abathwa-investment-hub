@@ -12,6 +12,7 @@ dotenv.config();
 import authRouter from './api/auth';
 import usersRouter from './api/users';
 import opportunitiesRouter from './api/opportunities';
+import poolsRouter from './api/pools';
 import aiRouter from './api/ai';
 
 const app = express();
@@ -71,6 +72,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/opportunities', opportunitiesRouter);
+app.use('/api/pools', poolsRouter);
 app.use('/api/ai', aiRouter);
 
 // 404 handler

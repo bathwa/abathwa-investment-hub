@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminUserManagement from "./pages/AdminUserManagement";
+import AdminPoolManagement from "./pages/AdminPoolManagement";
 import InvestorDashboard from "./pages/InvestorDashboard";
 import EntrepreneurDashboard from "./pages/EntrepreneurDashboard";
 import ServiceProviderDashboard from "./pages/ServiceProviderDashboard";
@@ -30,6 +32,24 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['super_admin']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/admin-user-management" 
+            element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminUserManagement />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/admin-pool-management" 
+            element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminPoolManagement />
               </ProtectedRoute>
             } 
           />

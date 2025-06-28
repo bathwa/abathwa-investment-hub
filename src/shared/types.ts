@@ -9,8 +9,10 @@ export type UserStatus = 'pending_verification' | 'active' | 'suspended' | 'dele
 export interface User {
   id: string;
   email: string;
-  phone?: string;
   full_name: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
   role: UserRole;
   status: UserStatus;
   avatar_url?: string;
@@ -18,7 +20,7 @@ export interface User {
   location?: string;
   website?: string;
   linkedin_url?: string;
-  reliability_score: number;
+  reliability_score?: number;
   created_at: string;
   updated_at: string;
   last_login?: string;
