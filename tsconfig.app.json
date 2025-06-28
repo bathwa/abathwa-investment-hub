@@ -21,6 +21,9 @@
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
 
+    /* Environment */
+    "types": ["vite/client"],
+
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
