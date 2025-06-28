@@ -7,17 +7,18 @@ import { AuthModal } from './AuthModal';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageToggle } from './LanguageToggle';
 import { 
-  Star, 
   TrendingUp, 
   Shield, 
   Users, 
   Building, 
   Handshake,
-  CheckCircle,
   ArrowRight,
-  Globe,
   Target,
-  Zap
+  Zap,
+  Globe,
+  Sparkles,
+  Rocket,
+  Lock
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -36,47 +37,37 @@ const translations = {
       title: "Why Choose Abathwa Investment Hub?",
       secure: {
         title: "Bank-Grade Security",
-        description: "Your investments and data are protected with enterprise-level security protocols."
+        description: "Your investments and data are protected with enterprise-level security protocols and end-to-end encryption."
       },
       transparent: {
         title: "Complete Transparency",
-        description: "Track every investment, milestone, and transaction with full visibility."
+        description: "Track every investment, milestone, and transaction with full visibility and real-time reporting."
       },
       community: {
         title: "Thriving Community",
-        description: "Join a network of successful investors, entrepreneurs, and service providers."
+        description: "Join a network of forward-thinking investors, entrepreneurs, and service providers across Africa."
       }
     },
     roles: {
       title: "Built for Every Stakeholder",
       investor: {
         title: "Investors",
-        description: "Discover vetted opportunities, form investment pools, and track your portfolio with advanced analytics."
+        description: "Discover vetted opportunities, form investment pools, and track your portfolio with advanced analytics and AI-powered insights."
       },
       entrepreneur: {
         title: "Entrepreneurs",
-        description: "Showcase your ventures, connect with investors, and manage your funding journey seamlessly."
+        description: "Showcase your ventures, connect with investors, and manage your funding journey with intelligent matching algorithms."
       },
       serviceProvider: {
         title: "Service Providers",
-        description: "Offer your expertise, co-sign agreements, and build your professional network."
+        description: "Offer your expertise, co-sign agreements, and build your professional network within our trusted ecosystem."
       }
     },
-    stats: {
-      investments: "Active Investments",
-      entrepreneurs: "Entrepreneurs",
-      returns: "Average Returns"
-    },
-    testimonials: {
-      title: "Trusted by Innovators",
-      testimonial1: "Abathwa transformed how we approach investment opportunities in Africa. The platform's transparency and security gave us the confidence to expand our portfolio significantly.",
-      author1: "Sarah Mukamuri, Investment Manager",
-      testimonial2: "As an entrepreneur, finding the right investors was always challenging. Abathwa made it seamless to connect with serious investors who understand our market.",
-      author2: "David Moyo, Tech Entrepreneur"
+    mission: {
+      title: "Our Mission",
+      description: "To democratize investment opportunities across Africa through technology, transparency, and community-driven innovation."
     },
     footer: {
-      mission: "Mission",
-      missionText: "To democratize investment opportunities across Africa through technology, transparency, and community.",
       support: "Support",
       phone: "Phone",
       email: "Email",
@@ -94,47 +85,37 @@ const translations = {
       title: "Kutheni Ukhetha i-Abathwa Investment Hub?",
       secure: {
         title: "Ukhuseleko Lwasebhankini",
-        description: "Utyalo-mali lwakho nedatha yakho zikhuselelwe ngeenkqubo zokhuseleko zoshishino."
+        description: "Utyalo-mali lwakho nedatha yakho zikhuselelwe ngeenkqubo zokhuseleko zoshishino kunye nokhuseleko oluphezulu."
       },
       transparent: {
         title: "Ukubonakala Okupheleleyo",
-        description: "Landela lonke utyalo-mali, izinto ezibalulekileyo, nengeniso ngokubona okupheleleyo."
+        description: "Landela lonke utyalo-mali, izinto ezibalulekileyo, nengeniso ngokubona okupheleleyo kunye neengxelo zexeshana."
       },
       community: {
         title: "Uluntu Oluphumeleleyo",
-        description: "Zijoyine kwiqonga labatyali-mali abaphumeleleyo, oosomashishini nababoneleli benkonzo."
+        description: "Zijoyine kwiqonga labatyali-mali abacingayo phambili, oosomashishini nababoneleli benkonzo kulo lonke elaseAfrika."
       }
     },
     roles: {
       title: "Yenzelwe Bonke Ababandakanyekayo",
       investor: {
         title: "Abatyali-mali",
-        description: "Fumana amathuba aqinisekisiweyo, wenze amaqela otyalo-mali, ulandele ipotifoliyo yakho ngeengcaciso eziphambili."
+        description: "Fumana amathuba aqinisekisiweyo, wenze amaqela otyalo-mali, ulandele ipotifoliyo yakho ngeengcaciso eziphambili kunye nezixhobo ze-AI."
       },
       entrepreneur: {
         title: "Oosomashishini",
-        description: "Bonisa amashishini akho, unxibelelane nabatyali-mali, ulawule uhambo lwakho lokufumana imali ngokuphandle."
+        description: "Bonisa amashishini akho, unxibelelane nabatyali-mali, ulawule uhambo lwakho lokufumana imali ngeenkqubo zokudibanisa ezikrelekrele."
       },
       serviceProvider: {
         title: "Ababoneleli Benkonzo",
-        description: "Nikela ngobuchule bakho, tyikitya izivumelwano, wakhe iqonga lakho lobuchwepheshe."
+        description: "Nikela ngobuchule bakho, tyikitya izivumelwano, wakhe iqonga lakho lobuchwepheshe ngaphakathi kwindawo yethu ethenjwayo."
       }
     },
-    stats: {
-      investments: "Utyalo-mali Olusebenzayo",
-      entrepreneurs: "Oosomashishini",
-      returns: "Imbuyekezo Ephakathi"
-    },
-    testimonials: {
-      title: "Ithenjwe Zizinto Ezintsha",
-      testimonial1: "I-Abathwa yaguqula indlela esisondela ngayo kumathuba otyalo-mali e-Afrika. Ukubonakala kweqonga nokhuseleko kwasikwenzelisa ukubetha isandla ukuze siwandise ipotifoliyo yethu kakhulu.",
-      author1: "Sarah Mukamuri, Umphathi Wotyalo-mali",
-      testimonial2: "Njengomntu oshinyayo, ukufumana abatyali-mali abafanelekileyo kwakusoloko kuyinkathazo. I-Abathwa yayenza yaba lula ukudibana nabatyali-mali abazimiseleyo abaqonda imarike yethu.",
-      author2: "David Moyo, Umsomashishini Wezobuchwepheshe"
+    mission: {
+      title: "Injongo Yethu",
+      description: "Ukwenza amathuba otyalo-mali e-Afrika abe lula kuye wonke umntu ngezobuchwepheshe, ukubonakala, kunye nophuhliso oluqhutywa luluntu."
     },
     footer: {
-      mission: "Injongo",
-      missionText: "Ukwenza amathuba otyalo-mali e-Afrika abe lula kuye wonke umntu ngezobuchwepheshe, ukubonakala, noluntu.",
       support: "Inkxaso",
       phone: "Ifowuni",
       email: "I-imeyili",
@@ -152,19 +133,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
       icon: Shield,
       title: t.features.secure.title,
       description: t.features.secure.description,
-      color: "text-green-600"
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
     },
     {
       icon: TrendingUp,
       title: t.features.transparent.title,
       description: t.features.transparent.description,
-      color: "text-blue-600"
+      color: "text-blue-500",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20"
     },
     {
       icon: Users,
       title: t.features.community.title,
       description: t.features.community.description,
-      color: "text-purple-600"
+      color: "text-purple-500",
+      bgColor: "bg-purple-50 dark:bg-purple-900/20"
     }
   ];
 
@@ -173,38 +157,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
       icon: Target,
       title: t.roles.investor.title,
       description: t.roles.investor.description,
-      color: "text-green-600",
-      badge: "Popular"
+      color: "text-blue-500",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      badge: "Popular",
+      badgeColor: "bg-blue-500"
     },
     {
       icon: Zap,
       title: t.roles.entrepreneur.title,
       description: t.roles.entrepreneur.description,
-      color: "text-orange-600",
-      badge: "Growth"
+      color: "text-orange-500",
+      bgColor: "bg-orange-50 dark:bg-orange-900/20",
+      badge: "Growth",
+      badgeColor: "bg-orange-500"
     },
     {
       icon: Handshake,
       title: t.roles.serviceProvider.title,
       description: t.roles.serviceProvider.description,
-      color: "text-teal-600",
-      badge: "Professional"
+      color: "text-teal-500",
+      bgColor: "bg-teal-50 dark:bg-teal-900/20",
+      badge: "Professional",
+      badgeColor: "bg-teal-500"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <header className="border-b border-white/20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 investment-gradient rounded-xl flex items-center justify-center">
-                <Building className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 modern-gradient rounded-2xl flex items-center justify-center shadow-lg animate-pulse-glow">
+                <Building className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">Abathwa</h1>
-                <p className="text-xs text-muted-foreground">Investment Hub</p>
+                <h1 className="text-2xl font-bold text-gradient">Abathwa</h1>
+                <p className="text-xs text-muted-foreground font-medium">Investment Hub</p>
               </div>
             </div>
             
@@ -214,13 +204,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
               <Button 
                 variant="outline" 
                 onClick={() => setAuthModal('signIn')}
-                className="btn-secondary"
+                className="btn-secondary font-medium"
               >
                 {t.hero.signIn}
               </Button>
               <Button 
                 onClick={() => setAuthModal('signUp')}
-                className="btn-primary"
+                className="btn-primary font-semibold"
               >
                 {t.hero.cta}
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -231,30 +221,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 hero-gradient">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+      <section className="py-24 hero-gradient overflow-hidden relative">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+        <div className="container mx-auto px-4 text-center relative">
+          <div className="max-w-5xl mx-auto">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-8">
+              <Sparkles className="w-4 h-4 text-white mr-2" />
+              <span className="text-white/90 text-sm font-medium">Revolutionizing African Investment</span>
+            </div>
+            
+            <h1 className="text-6xl md:text-7xl font-bold text-white mb-8 leading-tight">
               {t.hero.title}
             </h1>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
               {t.hero.subtitle}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
               <Button 
                 size="lg" 
                 onClick={() => setAuthModal('signUp')}
-                className="bg-white text-primary hover:bg-white/90 border-2 border-white px-8 py-3 text-lg font-semibold"
+                className="bg-white text-gray-900 hover:bg-gray-100 border-0 px-12 py-4 text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 rounded-2xl"
               >
+                <Rocket className="w-5 h-5 mr-3" />
                 {t.hero.cta}
-                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
                 onClick={() => setAuthModal('signIn')}
-                className="border-2 border-white text-white hover:bg-white/10 px-8 py-3 text-lg"
+                className="border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm px-12 py-4 text-xl font-semibold rounded-2xl"
               >
+                <Lock className="w-5 h-5 mr-3" />
                 {t.hero.signIn}
               </Button>
             </div>
@@ -262,43 +259,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-card">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">250+</div>
-              <div className="text-muted-foreground">{t.stats.investments}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">150+</div>
-              <div className="text-muted-foreground">{t.stats.entrepreneurs}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">24%</div>
-              <div className="text-muted-foreground">{t.stats.returns}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
-      <section className="py-20">
+      <section className="py-24 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">{t.features.title}</h2>
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-bold mb-6 text-gradient">{t.features.title}</h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {features.map((feature, index) => (
-              <Card key={index} className="card-hover border-2">
-                <CardHeader className="text-center pb-4">
-                  <div className={`w-16 h-16 mx-auto rounded-2xl bg-background border-2 flex items-center justify-center mb-4 ${feature.color}`}>
-                    <feature.icon className="w-8 h-8" />
+              <Card key={index} className="glass-card card-hover border-0 group">
+                <CardHeader className="text-center pb-6">
+                  <div className={`w-20 h-20 mx-auto rounded-3xl ${feature.bgColor} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                    <feature.icon className={`w-10 h-10 ${feature.color}`} />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-2xl font-bold">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-base leading-relaxed">
+                  <CardDescription className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
                     {feature.description}
                   </CardDescription>
                 </CardContent>
@@ -309,25 +287,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
       </section>
 
       {/* Roles Section */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-24 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">{t.roles.title}</h2>
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-bold mb-6 text-gradient">{t.roles.title}</h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-pink-500 mx-auto rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {roles.map((role, index) => (
-              <Card key={index} className="card-hover border-2 relative">
-                <CardHeader className="text-center pb-4">
-                  <Badge className="absolute top-4 right-4 bg-primary/10 text-primary border-primary/20">
+              <Card key={index} className="glass-card card-hover border-0 relative group">
+                <CardHeader className="text-center pb-6">
+                  <Badge className={`absolute top-6 right-6 ${role.badgeColor} text-white border-0 shadow-lg font-semibold px-3 py-1`}>
                     {role.badge}
                   </Badge>
-                  <div className={`w-16 h-16 mx-auto rounded-2xl bg-background border-2 flex items-center justify-center mb-4 ${role.color}`}>
-                    <role.icon className="w-8 h-8" />
+                  <div className={`w-20 h-20 mx-auto rounded-3xl ${role.bgColor} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                    <role.icon className={`w-10 h-10 ${role.color}`} />
                   </div>
-                  <CardTitle className="text-xl">{role.title}</CardTitle>
+                  <CardTitle className="text-2xl font-bold">{role.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-base leading-relaxed">
+                  <CardDescription className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
                     {role.description}
                   </CardDescription>
                 </CardContent>
@@ -337,99 +316,61 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">{t.testimonials.title}</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            <Card className="card-hover border-2">
-              <CardContent className="p-8">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-lg leading-relaxed mb-6 italic">
-                  "{t.testimonials.testimonial1}"
-                </p>
-                <div className="font-semibold">— {t.testimonials.author1}</div>
-              </CardContent>
-            </Card>
-            <Card className="card-hover border-2">
-              <CardContent className="p-8">
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-lg leading-relaxed mb-6 italic">
-                  "{t.testimonials.testimonial2}"
-                </p>
-                <div className="font-semibold">— {t.testimonials.author2}</div>
-              </CardContent>
-            </Card>
+      {/* Mission Section */}
+      <section className="py-24 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-4xl mx-auto">
+            <div className="w-16 h-16 mx-auto mb-8 modern-gradient rounded-2xl flex items-center justify-center animate-float">
+              <Globe className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-4xl font-bold mb-8 text-gradient">{t.mission.title}</h2>
+            <p className="text-xl leading-relaxed text-gray-600 dark:text-gray-300 font-light">
+              {t.mission.description}
+            </p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-card border-t py-16">
+      <footer className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 investment-gradient rounded-xl flex items-center justify-center">
-                  <Building className="w-6 h-6 text-white" />
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-12 h-12 modern-gradient rounded-2xl flex items-center justify-center shadow-lg">
+                  <Building className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">Abathwa</h3>
-                  <p className="text-sm text-muted-foreground">Investment Hub</p>
+                  <h3 className="text-2xl font-bold">Abathwa</h3>
+                  <p className="text-sm text-gray-300">Investment Hub</p>
                 </div>
               </div>
-              <div>
-                <h4 className="font-semibold mb-2">{t.footer.mission}</h4>
-                <p className="text-muted-foreground leading-relaxed">
-                  {t.footer.missionText}
-                </p>
-              </div>
+              <p className="text-gray-300 leading-relaxed text-lg">
+                {t.mission.description}
+              </p>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">{t.footer.support}</h4>
-              <div className="space-y-2 text-muted-foreground">
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">{t.footer.phone}:</span>
-                  <span>+263 78 998 9619</span>
+              <h4 className="font-bold mb-6 text-xl">{t.footer.support}</h4>
+              <div className="space-y-4 text-gray-300">
+                <div className="flex items-center space-x-3">
+                  <span className="font-semibold text-white">{t.footer.phone}:</span>
+                  <span className="text-lg">+263 78 998 9619</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">{t.footer.email}:</span>
-                  <span>admin@abathwa.com</span>
+                <div className="flex items-center space-x-3">
+                  <span className="font-semibold text-white">{t.footer.email}:</span>
+                  <span className="text-lg">admin@abathwa.com</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">{t.footer.whatsapp}:</span>
-                  <span>wa.me/789989619</span>
+                <div className="flex items-center space-x-3">
+                  <span className="font-semibold text-white">{t.footer.whatsapp}:</span>
+                  <span className="text-lg">wa.me/789989619</span>
                 </div>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <div className="space-y-2">
-                <Button 
-                  variant="ghost" 
-                  className="p-0 h-auto font-normal text-muted-foreground hover:text-primary"
-                  onClick={() => setAuthModal('signUp')}
-                >
-                  Get Started
-                </Button>
               </div>
             </div>
           </div>
           
-          <div className="border-t mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 Abathwa Investment Hub. All rights reserved.</p>
+          <div className="border-t border-gray-700 mt-12 pt-8 text-center">
+            <p className="text-gray-400">&copy; 2024 Abathwa Investment Hub. All rights reserved.</p>
           </div>
         </div>
       </footer>

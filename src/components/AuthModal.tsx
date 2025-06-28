@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Eye, EyeOff, User, Mail, Phone, Key, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -131,23 +131,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
           onClose();
         }, 3000);
       } else {
-        // Sign in logic - route to appropriate dashboard
+        // Sign in logic - clean routing without hardcoded roles
         onClose();
         
-        // Route based on user role (this would normally come from backend)
-        const userRole = formData.email === 'abathwabiz@gmail.com' || formData.email === 'admin@abathwa.com' 
-          ? 'admin' 
-          : 'investor'; // Default for demo
-          
-        if (userRole === 'admin') {
+        // This will be replaced with actual backend role determination
+        const adminEmails = ['abathwabiz@gmail.com', 'admin@abathwa.com'];
+        const isAdmin = adminEmails.includes(formData.email.toLowerCase());
+        
+        if (isAdmin) {
           navigate('/admin-dashboard');
-        } else if (userRole === 'entrepreneur') {
-          navigate('/entrepreneur-dashboard');
-        } else if (userRole === 'investor') {
-          navigate('/investor-dashboard');
-        } else if (userRole === 'serviceProvider') {
-          navigate('/service-provider-dashboard');
         } else {
+          // Default routing - backend will determine actual role
           navigate('/investor-dashboard');
         }
       }
@@ -161,13 +155,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
   if (success) {
     return (
       <Dialog open={true} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border-0 shadow-2xl">
           <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <CheckCircle className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Account Created!</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Account Created!</h3>
+            <p className="text-gray-600 dark:text-gray-300">
               {t.signUp.success}
             </p>
           </div>
@@ -178,12 +172,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
+          <DialogTitle className="text-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-orange-500 bg-clip-text text-transparent">
             {type === 'signIn' ? t.signIn.title : t.signUp.title}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600 dark:text-gray-300">
             {type === 'signIn' ? t.signIn.description : t.signUp.description}
           </DialogDescription>
         </DialogHeader>
@@ -192,32 +186,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
           {type === 'signUp' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="name">{t.signUp.name}</Label>
+                <Label htmlFor="name" className="text-gray-700 dark:text-gray-200 font-medium">{t.signUp.name}</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="name"
                     type="text"
                     placeholder="John Doe"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="pl-10 border-2"
+                    className="pl-10 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-xl h-12 bg-white/50 dark:bg-gray-800/50"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">{t.signUp.phone}</Label>
+                <Label htmlFor="phone" className="text-gray-700 dark:text-gray-200 font-medium">{t.signUp.phone}</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="+263 78 123 4567"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="pl-10 border-2"
+                    className="pl-10 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-xl h-12 bg-white/50 dark:bg-gray-800/50"
                     required
                   />
                 </div>
@@ -226,42 +220,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">{type === 'signIn' ? t.signIn.email : t.signUp.email}</Label>
+            <Label htmlFor="email" className="text-gray-700 dark:text-gray-200 font-medium">{type === 'signIn' ? t.signIn.email : t.signUp.email}</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="email"
                 type="email"
                 placeholder="john@example.com"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="pl-10 border-2"
+                className="pl-10 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-xl h-12 bg-white/50 dark:bg-gray-800/50"
                 required
               />
             </div>
             {isAdminUser && type === 'signUp' && (
-              <Badge className="bg-primary/10 text-primary">
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
                 Admin User Detected
               </Badge>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">{type === 'signIn' ? t.signIn.password : t.signUp.password}</Label>
+            <Label htmlFor="password" className="text-gray-700 dark:text-gray-200 font-medium">{type === 'signIn' ? t.signIn.password : t.signUp.password}</Label>
             <div className="relative">
-              <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                className="pl-10 pr-10 border-2"
+                className="pl-10 pr-10 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-xl h-12 bg-white/50 dark:bg-gray-800/50"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -271,15 +265,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
           {type === 'signUp' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t.signUp.confirmPassword}</Label>
+                <Label htmlFor="confirmPassword" className="text-gray-700 dark:text-gray-200 font-medium">{t.signUp.confirmPassword}</Label>
                 <div className="relative">
-                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="confirmPassword"
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    className="pl-10 border-2"
+                    className="pl-10 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-xl h-12 bg-white/50 dark:bg-gray-800/50"
                     required
                   />
                 </div>
@@ -287,32 +281,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
 
               {isAdminUser ? (
                 <div className="space-y-2">
-                  <Label htmlFor="adminKey">{t.signUp.adminKey}</Label>
+                  <Label htmlFor="adminKey" className="text-gray-700 dark:text-gray-200 font-medium">{t.signUp.adminKey}</Label>
                   <Input
                     id="adminKey"
                     type="text"
                     placeholder="'vvv.ndev'"
                     value={formData.adminKey}
                     onChange={(e) => handleInputChange('adminKey', e.target.value)}
-                    className="border-2"
+                    className="border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-xl h-12 bg-white/50 dark:bg-gray-800/50"
                     required
                   />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {t.signUp.adminKeyHint}
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label>{t.signUp.role}</Label>
+                  <Label className="text-gray-700 dark:text-gray-200 font-medium">{t.signUp.role}</Label>
                   <Select 
                     value={formData.role} 
                     onValueChange={(value) => handleInputChange('role', value)}
                     required
                   >
-                    <SelectTrigger className="border-2">
+                    <SelectTrigger className="border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-xl h-12 bg-white/50 dark:bg-gray-800/50">
                       <SelectValue placeholder="Choose your role..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl shadow-xl">
                       <SelectItem value="investor">{t.signUp.roles.investor}</SelectItem>
                       <SelectItem value="entrepreneur">{t.signUp.roles.entrepreneur}</SelectItem>
                       <SelectItem value="serviceProvider">{t.signUp.roles.serviceProvider}</SelectItem>
@@ -325,18 +319,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
 
           <Button 
             type="submit" 
-            className="w-full btn-primary text-lg py-6"
+            className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-orange-500 hover:from-blue-700 hover:via-purple-700 hover:to-orange-600 text-white font-semibold text-lg py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Processing...' : (type === 'signIn' ? t.signIn.button : t.signUp.button)}
           </Button>
 
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-gray-600 dark:text-gray-300">
             {type === 'signIn' ? t.signIn.switchText : t.signUp.switchText}{' '}
             <button
               type="button"
-              onClick={() => window.location.reload()} // Simple way to switch modes
-              className="text-primary hover:underline font-medium"
+              onClick={() => window.location.reload()}
+              className="text-blue-600 hover:text-purple-600 font-medium hover:underline transition-colors"
             >
               {type === 'signIn' ? t.signIn.switchLink : t.signUp.switchLink}
             </button>
