@@ -7,9 +7,6 @@ import {
   DollarSign, 
   Target,
   Building,
-  LogOut,
-  ArrowLeft,
-  Bell,
   Plus,
   Eye,
   Users,
@@ -23,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { DashboardHeader } from '../components/DashboardHeader';
 
 interface InvestmentStats {
   totalInvested: number;
@@ -52,7 +50,7 @@ interface Pool {
 
 export const InvestorDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
@@ -189,15 +187,6 @@ export const InvestorDashboard: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -208,15 +197,20 @@ export const InvestorDashboard: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'default';
+      case 'completed': return 'default';
       case 'pending': return 'secondary';
+      case 'processing': return 'outline';
       case 'active': return 'default';
-      case 'completed': return 'outline';
+      case 'confirmed': return 'default';
       default: return 'outline';
     }
   };
@@ -234,59 +228,13 @@ export const InvestorDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleBack}
-                className="border-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 investment-gradient rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold">Investor Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back, {user?.first_name || user?.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="icon" className="border-2">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Badge className="bg-blue-100 text-blue-600 border-blue-200">
-                {user?.verification_status === 'verified' ? 'Verified Investor' : 'Investor'}
-              </Badge>
-              <Button 
-                onClick={handleLogout}
-                className="btn-secondary"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Log Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Your Investment Portfolio</h2>
-          <p className="text-muted-foreground">Track your investments and discover new opportunities.</p>
-        </div>
-
-        {/* Investment Stats */}
+      <DashboardHeader 
+        title="Investor Dashboard" 
+        subtitle="Track your investments and portfolio"
+      />
+      
+      <main className="container mx-auto px-4 py-8">
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-2 card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -300,7 +248,7 @@ export const InvestorDashboard: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold mb-1">{formatCurrency(investmentStats.totalInvested)}</div>
               <p className="text-xs text-green-600 font-medium">
-                Across {investments.length} investments
+                Across all investments
               </p>
             </CardContent>
           </Card>
@@ -311,7 +259,7 @@ export const InvestorDashboard: React.FC = () => {
                 Active Investments
               </CardTitle>
               <div className="p-2 rounded-lg bg-background text-blue-600">
-                <Target className="w-4 h-4" />
+                <TrendingUp className="w-4 h-4" />
               </div>
             </CardHeader>
             <CardContent>
@@ -325,16 +273,16 @@ export const InvestorDashboard: React.FC = () => {
           <Card className="border-2 card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Portfolio Value
+                Total Returns
               </CardTitle>
               <div className="p-2 rounded-lg bg-background text-purple-600">
                 <PieChart className="w-4 h-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-1">{formatCurrency(investmentStats.portfolioValue)}</div>
+              <div className="text-2xl font-bold mb-1">{formatCurrency(investmentStats.totalReturns)}</div>
               <p className="text-xs text-purple-600 font-medium">
-                Including returns
+                Expected returns
               </p>
             </CardContent>
           </Card>
@@ -342,129 +290,116 @@ export const InvestorDashboard: React.FC = () => {
           <Card className="border-2 card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Investment Pools
+                Portfolio Value
               </CardTitle>
               <div className="p-2 rounded-lg bg-background text-orange-600">
-                <Users className="w-4 h-4" />
+                <BarChart3 className="w-4 h-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-1">{pools.length}</div>
+              <div className="text-2xl font-bold mb-1">{formatCurrency(investmentStats.portfolioValue)}</div>
               <p className="text-xs text-orange-600 font-medium">
-                Pool memberships
+                Total portfolio value
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Investments */}
-          <div className="lg:col-span-2">
-            <Card className="border-2">
-              <CardHeader className="flex flex-row items-center justify-between">
+        {/* Recent Investments */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Your Investments</CardTitle>
-                  <CardDescription>
-                    {investments.length === 0 ? 'No investments yet' : 'Your recent investment activities'}
-                  </CardDescription>
+                  <CardTitle>Recent Investments</CardTitle>
+                  <CardDescription>Your latest investment activities</CardDescription>
                 </div>
-                <Button size="sm" className="btn-primary">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Browse Opportunities
+                <Button variant="outline" size="sm">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View All
                 </Button>
-              </CardHeader>
-              <CardContent>
-                {investments.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">No investments made yet</p>
-                    <Button size="sm" className="btn-primary">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Start Investing
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {investments.map((investment) => (
-                      <div key={investment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h4 className="font-semibold">{investment.opportunity_title}</h4>
-                            <Badge variant={getStatusBadgeVariant(investment.status)}>
-                              {investment.status}
-                            </Badge>
-                          </div>
-                          <div className="mt-2 text-sm text-muted-foreground">
-                            <span>Amount: {formatCurrency(investment.amount)}</span>
-                            <span className="mx-2">•</span>
-                            <span>Expected ROI: {investment.expected_roi}%</span>
-                            <span className="mx-2">•</span>
-                            <span>Term: {investment.investment_term_months} months</span>
-                          </div>
-                          <div className="mt-2 text-xs text-muted-foreground">
-                            Invested on {formatDate(investment.created_at)}
-                          </div>
-                        </div>
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
-                        </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {investments.length > 0 ? (
+                <div className="space-y-4">
+                  {investments.slice(0, 5).map((investment) => (
+                    <div key={investment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{investment.opportunity_title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {formatCurrency(investment.amount)} • {formatDate(investment.created_at)}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={getStatusBadgeVariant(investment.status)}>
+                          {investment.status}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {investment.expected_roi}% ROI
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No investments yet</p>
+                  <Button className="mt-4">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Start Investing
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Investment Pools */}
-          <div>
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle>Investment Pools</CardTitle>
-                <CardDescription>
-                  {pools.length === 0 ? 'No pool memberships' : 'Pools you\'re part of'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {pools.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">Not part of any pools yet</p>
-                    <Button size="sm" className="btn-primary">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Join a Pool
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pools.map((pool) => (
-                      <div key={pool.id} className="p-3 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm">{pool.name}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {pool.status}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <div>Category: {pool.category}</div>
-                          <div>Members: {pool.total_members}</div>
-                          <div>Total Invested: {formatCurrency(pool.total_invested)}</div>
-                        </div>
-                        <div className="mt-3">
-                          <Button size="sm" className="text-xs w-full">
-                            View Pool
-                          </Button>
-                        </div>
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Investment Pools</CardTitle>
+                  <CardDescription>Pools you're participating in</CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Join Pool
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {pools.length > 0 ? (
+                <div className="space-y-4">
+                  {pools.slice(0, 5).map((pool) => (
+                    <div key={pool.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{pool.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {pool.total_members} members • {pool.category}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                      <Badge variant={pool.status === 'active' ? 'default' : 'secondary'}>
+                        {pool.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Building className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Not part of any pools yet</p>
+                  <Button className="mt-4">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Join a Pool
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

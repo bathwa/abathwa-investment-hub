@@ -7,9 +7,6 @@ import {
   DollarSign, 
   Target,
   Building,
-  LogOut,
-  ArrowLeft,
-  Bell,
   Plus,
   Eye,
   Users,
@@ -23,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { DashboardHeader } from '../components/DashboardHeader';
 
 interface ServiceStats {
   totalEarnings: number;
@@ -54,7 +52,7 @@ interface ServiceRequest {
 
 export const ServiceProviderDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
@@ -150,15 +148,6 @@ export const ServiceProviderDashboard: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -166,6 +155,14 @@ export const ServiceProviderDashboard: React.FC = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -203,59 +200,13 @@ export const ServiceProviderDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleBack}
-                className="border-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 investment-gradient rounded-xl flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold">Service Provider Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back, {user?.first_name || user?.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="icon" className="border-2">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Badge className="bg-teal-100 text-teal-600 border-teal-200">
-                {user?.verification_status === 'verified' ? 'Verified Provider' : 'Service Provider'}
-              </Badge>
-              <Button 
-                onClick={handleLogout}
-                className="btn-secondary"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Log Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Your Professional Services</h2>
-          <p className="text-muted-foreground">Track your projects and manage client relationships.</p>
-        </div>
-
-        {/* Service Stats */}
+      <DashboardHeader 
+        title="Service Provider Dashboard" 
+        subtitle="Manage your professional services"
+      />
+      
+      <main className="container mx-auto px-4 py-8">
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-2 card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -269,7 +220,7 @@ export const ServiceProviderDashboard: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold mb-1">{formatCurrency(serviceStats.totalEarnings)}</div>
               <p className="text-xs text-green-600 font-medium">
-                From {projects.length} projects
+                From completed projects
               </p>
             </CardContent>
           </Card>
@@ -286,7 +237,7 @@ export const ServiceProviderDashboard: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold mb-1">{serviceStats.activeProjects}</div>
               <p className="text-xs text-blue-600 font-medium">
-                Currently in progress
+                Currently working on
               </p>
             </CardContent>
           </Card>
@@ -301,9 +252,9 @@ export const ServiceProviderDashboard: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-1">{serviceStats.clientRating.toFixed(1)}/5</div>
+              <div className="text-2xl font-bold mb-1">{serviceStats.clientRating.toFixed(1)}</div>
               <p className="text-xs text-purple-600 font-medium">
-                Average client rating
+                Average rating
               </p>
             </CardContent>
           </Card>
@@ -326,124 +277,117 @@ export const ServiceProviderDashboard: React.FC = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Projects and Requests */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Active Projects */}
-          <div className="lg:col-span-2">
-            <Card className="border-2">
-              <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Your Projects</CardTitle>
-                  <CardDescription>
-                    {projects.length === 0 ? 'No projects yet' : 'Your current client engagements'}
-                  </CardDescription>
+                  <CardTitle>Active Projects</CardTitle>
+                  <CardDescription>Projects you're currently working on</CardDescription>
                 </div>
-                <Button size="sm" className="btn-primary">
+                <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  New Service
+                  New Project
                 </Button>
-              </CardHeader>
-              <CardContent>
-                {projects.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Briefcase className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">No projects yet</p>
-                    <Button size="sm" className="btn-primary">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Start Your First Project
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {projects.map((project) => (
-                      <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h4 className="font-semibold">{project.name}</h4>
-                            <Badge variant={getStatusBadgeVariant(project.status)}>
-                              {getStatusDisplayName(project.status)}
-                            </Badge>
-                          </div>
-                          <div className="mt-2 text-sm text-muted-foreground">
-                            <span>{project.service_type}</span>
-                            <span className="mx-2">•</span>
-                            <span>Budget: {formatCurrency(project.budget)}</span>
-                            <span className="mx-2">•</span>
-                            <span>{project.days_left} days left</span>
-                          </div>
-                          <div className="mt-2">
-                            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                              <span>Progress</span>
-                              <span>{project.progress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+              </div>
+            </CardHeader>
+            <CardContent>
+              {projects.length > 0 ? (
+                <div className="space-y-4">
+                  {projects.slice(0, 5).map((project) => (
+                    <div key={project.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{project.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {project.service_type} • {formatCurrency(project.budget)}
+                        </p>
+                        <div className="mt-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-blue-600 h-2 rounded-full" 
                                 style={{ width: `${project.progress}%` }}
-                              />
+                              ></div>
                             </div>
+                            <span className="text-xs text-muted-foreground">{project.progress}%</span>
                           </div>
                         </div>
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={getStatusBadgeVariant(project.status)}>
+                          {getStatusDisplayName(project.status)}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4" />
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Briefcase className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No active projects</p>
+                  <Button className="mt-4">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Start Your First Project
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Service Requests */}
-          <div>
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle>Service Requests</CardTitle>
-                <CardDescription>
-                  {serviceRequests.length === 0 ? 'No requests yet' : 'New client inquiries'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {serviceRequests.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No service requests yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {serviceRequests.map((request) => (
-                      <div key={request.id} className="p-3 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm">{request.title}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {getStatusDisplayName(request.status)}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Client: {request.client_name}
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Service Requests</CardTitle>
+                  <CardDescription>Recent requests from clients</CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {serviceRequests.length > 0 ? (
+                <div className="space-y-4">
+                  {serviceRequests.slice(0, 5).map((request) => (
+                    <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{request.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {request.client_name} • {request.budget_range}
                         </p>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <div>Budget: {request.budget_range}</div>
-                          <div>Deadline: {request.deadline}</div>
-                        </div>
-                        <div className="mt-3 flex space-x-2">
-                          <Button size="sm" className="text-xs">
-                            Accept
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-xs">
-                            Decline
-                          </Button>
-                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Due: {formatDate(request.deadline)}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={getStatusBadgeVariant(request.status)}>
+                          {getStatusDisplayName(request.status)}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No service requests</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

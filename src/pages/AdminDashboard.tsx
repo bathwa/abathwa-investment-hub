@@ -9,9 +9,6 @@ import {
   Settings, 
   Shield,
   Building,
-  LogOut,
-  ArrowLeft,
-  Bell,
   BarChart3,
   FileText,
   CreditCard,
@@ -24,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { DashboardHeader } from '../components/DashboardHeader';
 import { validateApiResponse, filterMockData } from '../lib/validation';
 
 interface PlatformStats {
@@ -35,17 +33,9 @@ interface PlatformStats {
   activeOpportunities: number;
 }
 
-interface QuickAction {
-  title: string;
-  description: string;
-  icon: React.ComponentType<any>;
-  color: string;
-  route: string;
-}
-
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
@@ -188,50 +178,6 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleQuickAction = (route: string) => {
-    // Navigate to specific admin sections
-    switch (route) {
-      case '/admin/users':
-        navigate('/admin-user-management');
-        break;
-      case '/admin/pools':
-        navigate('/admin-pool-management');
-        break;
-      case '/admin/investments':
-        navigate('/admin-investments');
-        break;
-      case '/admin/settings':
-        navigate('/admin-settings');
-        break;
-      case '/admin/reports':
-        navigate('/admin-reports');
-        break;
-      case '/admin/payments':
-        navigate('/admin-payments');
-        break;
-      case '/admin/security':
-        navigate('/admin-security');
-        break;
-      case '/admin/approvals':
-        navigate('/admin-approvals');
-        break;
-      default:
-        toast({
-          title: "Coming Soon",
-          description: "This feature is under development",
-        });
-    }
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -241,57 +187,12 @@ export const AdminDashboard: React.FC = () => {
     }).format(amount);
   };
 
-  const quickActions: QuickAction[] = [
-    {
-      title: "User Management",
-      description: "Manage user accounts and permissions",
-      icon: Users,
-      color: "bg-blue-100 text-blue-600",
-      route: "/admin/users"
-    },
-    {
-      title: "Pool Management",
-      description: "Manage investment pools",
-      icon: Building,
-      color: "bg-green-100 text-green-600",
-      route: "/admin/pools"
-    },
-    {
-      title: "Investment Oversight",
-      description: "Monitor all investment activities",
-      icon: BarChart3,
-      color: "bg-purple-100 text-purple-600",
-      route: "/admin/investments"
-    },
-    {
-      title: "Platform Settings",
-      description: "Configure system settings",
-      icon: Settings,
-      color: "bg-orange-100 text-orange-600",
-      route: "/admin/settings"
-    },
-    {
-      title: "Reports & Analytics",
-      description: "View detailed reports and analytics",
-      icon: FileText,
-      color: "bg-teal-100 text-teal-600",
-      route: "/admin/reports"
-    },
-    {
-      title: "Security & Compliance",
-      description: "Security settings and compliance",
-      icon: Shield,
-      color: "bg-red-100 text-red-600",
-      route: "/admin/security"
-    }
-  ];
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading admin dashboard...</span>
+          <span>Loading dashboard...</span>
         </div>
       </div>
     );
@@ -299,60 +200,14 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleBack}
-                className="border-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 investment-gradient rounded-xl flex items-center justify-center">
-                  <Building className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold">Admin Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back, {user?.first_name || user?.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="icon" className="border-2">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Badge className="bg-primary/10 text-primary border-primary/20">
-                Super Admin
-              </Badge>
-              <Button 
-                onClick={handleLogout}
-                className="btn-secondary"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Log Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Platform Overview</h2>
-          <p className="text-muted-foreground">Here's what's happening with your investment platform today.</p>
-        </div>
-
+      <DashboardHeader 
+        title="Admin Dashboard" 
+        subtitle="Platform overview and management"
+      />
+      
+      <main className="container mx-auto px-4 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card className="border-2 card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -363,7 +218,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-1">{stats.totalUsers.toLocaleString()}</div>
+              <div className="text-2xl font-bold mb-1">{stats.totalUsers}</div>
               <p className="text-xs text-blue-600 font-medium">
                 Registered users
               </p>
@@ -399,7 +254,7 @@ export const AdminDashboard: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold mb-1">{formatCurrency(stats.platformRevenue)}</div>
               <p className="text-xs text-purple-600 font-medium">
-                Total fees collected
+                From completed transactions
               </p>
             </CardContent>
           </Card>
@@ -420,92 +275,77 @@ export const AdminDashboard: React.FC = () => {
               </p>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Pending Approvals Alert */}
-        {stats.pendingApprovals > 0 && (
-          <Card className="border-2 border-yellow-200 bg-yellow-50 mb-8">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                  <div>
-                    <h3 className="font-semibold text-yellow-800">
-                      {stats.pendingApprovals} Pending Approvals
-                    </h3>
-                    <p className="text-sm text-yellow-700">
-                      Opportunities and requests require your attention
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleQuickAction('/admin/approvals')}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Review
-                </Button>
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Pending Approvals
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-yellow-600">
+                <AlertTriangle className="w-4 h-4" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{stats.pendingApprovals}</div>
+              <p className="text-xs text-yellow-600 font-medium">
+                Awaiting review
+              </p>
             </CardContent>
           </Card>
-        )}
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Active Opportunities
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-indigo-600">
+                <BarChart3 className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{stats.activeOpportunities}</div>
+              <p className="text-xs text-indigo-600 font-medium">
+                Currently funding
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Quick Actions */}
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold mb-6">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {quickActions.map((action, index) => (
-              <Card 
-                key={index} 
-                className="border-2 card-hover cursor-pointer" 
-                onClick={() => handleQuickAction(action.route)}
-              >
-                <CardHeader>
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${action.color}`}>
-                      <action.icon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{action.title}</CardTitle>
-                      <CardDescription>{action.description}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Button 
+            onClick={() => navigate('/admin-user-management')}
+            className="h-20 flex flex-col items-center justify-center space-y-2 border-2"
+          >
+            <Users className="w-6 h-6" />
+            <span>User Management</span>
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/admin-pool-management')}
+            className="h-20 flex flex-col items-center justify-center space-y-2 border-2"
+          >
+            <Building className="w-6 h-6" />
+            <span>Pool Management</span>
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/admin-investments')}
+            className="h-20 flex flex-col items-center justify-center space-y-2 border-2"
+          >
+            <CreditCard className="w-6 h-6" />
+            <span>Investment Review</span>
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="h-20 flex flex-col items-center justify-center space-y-2 border-2"
+          >
+            <Settings className="w-6 h-6" />
+            <span>Platform Settings</span>
+          </Button>
         </div>
-
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle>Recent User Registrations</CardTitle>
-              <CardDescription>Latest user signups</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">User management functionality coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle>System Alerts</CardTitle>
-              <CardDescription>Platform notifications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No alerts at this time</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

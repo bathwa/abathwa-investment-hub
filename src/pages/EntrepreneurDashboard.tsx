@@ -7,9 +7,6 @@ import {
   DollarSign, 
   Target,
   Building,
-  LogOut,
-  ArrowLeft,
-  Bell,
   Plus,
   Eye,
   Users,
@@ -21,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { DashboardHeader } from '../components/DashboardHeader';
 
 interface BusinessStats {
   totalFunding: number;
@@ -31,9 +29,9 @@ interface BusinessStats {
 
 interface Opportunity {
   id: string;
-  name: string;
+  title: string;
   status: string;
-  target_amount: number;
+  funding_target: number;
   raised_amount: number;
   investors_count: number;
   days_left: number;
@@ -45,12 +43,11 @@ interface Activity {
   type: string;
   description: string;
   created_at: string;
-  status: 'success' | 'info' | 'warning';
 }
 
 export const EntrepreneurDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
@@ -115,11 +112,12 @@ export const EntrepreneurDashboard: React.FC = () => {
         
         // Get unique investors count
         const { data: investorsData } = await supabase
-          .from('investments')
-          .select('investor_id')
+          .from('transactions')
+          .select('from_user_id')
+          .eq('type', 'investment')
           .in('opportunity_id', opportunitiesData.map(opp => opp.id));
         
-        const uniqueInvestors = new Set(investorsData?.map(inv => inv.investor_id) || []).size;
+        const uniqueInvestors = new Set(investorsData?.map(inv => inv.from_user_id) || []).size;
         
         // Get milestones count
         const { data: milestonesData } = await supabase
@@ -148,15 +146,6 @@ export const EntrepreneurDashboard: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -166,33 +155,22 @@ export const EntrepreneurDashboard: React.FC = () => {
     }).format(amount);
   };
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    return date.toLocaleDateString();
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'funding_in_progress': return 'default';
-      case 'published': return 'secondary';
+      case 'published': return 'default';
+      case 'funding_in_progress': return 'secondary';
       case 'draft': return 'outline';
+      case 'pending_approval': return 'outline';
+      case 'completed': return 'default';
       default: return 'outline';
-    }
-  };
-
-  const getStatusDisplayName = (status: string) => {
-    switch (status) {
-      case 'funding_in_progress': return 'Funding in Progress';
-      case 'published': return 'Published';
-      case 'draft': return 'Draft';
-      default: return status;
     }
   };
 
@@ -209,64 +187,18 @@ export const EntrepreneurDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleBack}
-                className="border-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 investment-gradient rounded-xl flex items-center justify-center">
-                  <Building className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold">Entrepreneur Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back, {user?.first_name || user?.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="icon" className="border-2">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Badge className="bg-orange-100 text-orange-600 border-orange-200">
-                {user?.verification_status === 'verified' ? 'Verified Entrepreneur' : 'Entrepreneur'}
-              </Badge>
-              <Button 
-                onClick={handleLogout}
-                className="btn-secondary"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Log Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Your Business Ventures</h2>
-          <p className="text-muted-foreground">Track your funding progress and manage opportunities.</p>
-        </div>
-
-        {/* Business Stats */}
+      <DashboardHeader 
+        title="Entrepreneur Dashboard" 
+        subtitle="Manage your business opportunities"
+      />
+      
+      <main className="container mx-auto px-4 py-8">
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-2 card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Funding Raised
+                Total Funding
               </CardTitle>
               <div className="p-2 rounded-lg bg-background text-green-600">
                 <DollarSign className="w-4 h-4" />
@@ -275,7 +207,7 @@ export const EntrepreneurDashboard: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold mb-1">{formatCurrency(businessStats.totalFunding)}</div>
               <p className="text-xs text-green-600 font-medium">
-                From {opportunities.length} opportunities
+                Raised across all opportunities
               </p>
             </CardContent>
           </Card>
@@ -292,7 +224,7 @@ export const EntrepreneurDashboard: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold mb-1">{businessStats.activeOpportunities}</div>
               <p className="text-xs text-blue-600 font-medium">
-                Currently seeking funding
+                Currently funding
               </p>
             </CardContent>
           </Card>
@@ -332,107 +264,96 @@ export const EntrepreneurDashboard: React.FC = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Active Opportunities */}
-          <div className="lg:col-span-2">
-            <Card className="border-2">
-              <CardHeader className="flex flex-row items-center justify-between">
+        {/* Opportunities and Activities */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Opportunities */}
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Your Opportunities</CardTitle>
-                  <CardDescription>
-                    {opportunities.length === 0 ? 'No opportunities yet' : 'Your current funding campaigns'}
-                  </CardDescription>
+                  <CardDescription>Manage your funding opportunities</CardDescription>
                 </div>
-                <Button size="sm" className="btn-primary">
+                <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create New
+                  Create Opportunity
                 </Button>
-              </CardHeader>
-              <CardContent>
-                {opportunities.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">No opportunities created yet</p>
-                    <Button size="sm" className="btn-primary">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Your First Opportunity
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {opportunities.map((opportunity) => (
-                      <div key={opportunity.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h4 className="font-semibold">{opportunity.name}</h4>
-                            <Badge variant={getStatusBadgeVariant(opportunity.status)}>
-                              {getStatusDisplayName(opportunity.status)}
-                            </Badge>
-                          </div>
-                          <div className="mt-2 text-sm text-muted-foreground">
-                            <span>Target: {formatCurrency(opportunity.target_amount)}</span>
-                            <span className="mx-2">•</span>
-                            <span>Raised: {formatCurrency(opportunity.raised_amount)}</span>
-                            <span className="mx-2">•</span>
-                            <span>{opportunity.investors_count} investors</span>
-                          </div>
-                          {opportunity.days_left > 0 && (
-                            <div className="mt-2 text-xs text-orange-600">
-                              {opportunity.days_left} days left
-                            </div>
-                          )}
-                        </div>
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
+              </div>
+            </CardHeader>
+            <CardContent>
+              {opportunities.length > 0 ? (
+                <div className="space-y-4">
+                  {opportunities.slice(0, 5).map((opportunity) => (
+                    <div key={opportunity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{opportunity.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {formatCurrency(opportunity.funding_target)} target • {formatDate(opportunity.created_at)}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={getStatusBadgeVariant(opportunity.status)}>
+                          {opportunity.status.replace('_', ' ')}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4" />
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No opportunities yet</p>
+                  <Button className="mt-4">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Opportunity
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Recent Activities */}
-          <div>
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle>Recent Activities</CardTitle>
-                <CardDescription>
-                  {activities.length === 0 ? 'No recent activity' : 'Latest updates on your ventures'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {activities.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No recent activities</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {activities.map((activity) => (
-                      <div key={activity.id} className="flex items-start space-x-3">
-                        <div className={`w-2 h-2 rounded-full mt-2 ${
-                          activity.status === 'success' ? 'bg-green-500' :
-                          activity.status === 'info' ? 'bg-blue-500' : 'bg-orange-500'
-                        }`} />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{activity.type}</p>
-                          <p className="text-xs text-muted-foreground">{activity.description}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatTimeAgo(activity.created_at)}
-                          </p>
-                        </div>
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Activities</CardTitle>
+                  <CardDescription>Latest updates and milestones</CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {activities.length > 0 ? (
+                <div className="space-y-4">
+                  {activities.slice(0, 5).map((activity) => (
+                    <div key={activity.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(activity.created_at)}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No recent activities</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

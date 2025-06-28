@@ -3,27 +3,28 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Eye, 
-  FileText, 
-  AlertTriangle,
-  LogOut,
-  ArrowLeft,
-  Bell,
-  Users,
-  Building,
+  TrendingUp, 
+  DollarSign, 
   Target,
+  Building,
+  Eye,
+  Users,
+  FileText,
+  Calendar,
   Loader2,
-  Calendar
+  AlertTriangle,
+  Shield
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { DashboardHeader } from '../components/DashboardHeader';
 
 interface ObservedEntity {
   id: string;
   name: string;
-  type: 'opportunity' | 'company' | 'investment_pool';
+  type: 'opportunity' | 'investment_pool' | 'company';
   status: string;
   last_activity: string;
   risk_level: string;
@@ -33,15 +34,14 @@ interface ObservedEntity {
 interface Report {
   id: string;
   title: string;
-  entity_name: string;
   type: string;
-  generated_at: string;
   status: string;
+  created_at: string;
 }
 
 export const ObserverDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
@@ -100,33 +100,36 @@ export const ObserverDashboard: React.FC = () => {
         const entities: ObservedEntity[] = [];
         
         observersData?.forEach(observer => {
-          if (observer.opportunities) {
+          if (observer.opportunities && Array.isArray(observer.opportunities) && observer.opportunities.length > 0) {
+            const opportunity = observer.opportunities[0];
             entities.push({
-              id: observer.opportunities.id,
-              name: observer.opportunities.title,
+              id: opportunity.id,
+              name: opportunity.title,
               type: 'opportunity',
-              status: observer.opportunities.status,
-              last_activity: observer.opportunities.updated_at,
+              status: opportunity.status,
+              last_activity: opportunity.updated_at,
               risk_level: 'Low', // Would be calculated based on risk score
               alerts_count: 0 // Would be calculated based on alerts
             });
-          } else if (observer.investment_pools) {
+          } else if (observer.investment_pools && Array.isArray(observer.investment_pools) && observer.investment_pools.length > 0) {
+            const pool = observer.investment_pools[0];
             entities.push({
-              id: observer.investment_pools.id,
-              name: observer.investment_pools.name,
+              id: pool.id,
+              name: pool.name,
               type: 'investment_pool',
-              status: observer.investment_pools.status,
-              last_activity: observer.investment_pools.updated_at,
+              status: pool.status,
+              last_activity: pool.updated_at,
               risk_level: 'Low',
               alerts_count: 0
             });
-          } else if (observer.users) {
+          } else if (observer.users && Array.isArray(observer.users) && observer.users.length > 0) {
+            const user = observer.users[0];
             entities.push({
-              id: observer.users.id,
-              name: observer.users.full_name,
+              id: user.id,
+              name: user.full_name,
               type: 'company',
-              status: observer.users.status,
-              last_activity: observer.users.updated_at,
+              status: user.status,
+              last_activity: user.updated_at,
               risk_level: 'Low',
               alerts_count: 0
             });
@@ -151,42 +154,39 @@ export const ObserverDashboard: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    return date.toLocaleDateString();
-  };
-
-  const getEntityIcon = (type: string) => {
-    switch (type) {
-      case 'opportunity': return Target;
-      case 'company': return Building;
-      case 'investment_pool': return Users;
-      default: return Eye;
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'active': return 'default';
+      case 'published': return 'default';
+      case 'pending': return 'secondary';
+      case 'draft': return 'outline';
+      default: return 'outline';
     }
   };
 
   const getRiskLevelColor = (riskLevel: string) => {
     switch (riskLevel.toLowerCase()) {
-      case 'low': return 'bg-green-100 text-green-600 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-600 border-yellow-200';
-      case 'high': return 'bg-red-100 text-red-600 border-red-200';
-      default: return 'bg-gray-100 text-gray-600 border-gray-200';
+      case 'low': return 'text-green-600';
+      case 'medium': return 'text-yellow-600';
+      case 'high': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const getEntityIcon = (type: string) => {
+    switch (type) {
+      case 'opportunity': return Target;
+      case 'investment_pool': return Building;
+      case 'company': return Users;
+      default: return Eye;
     }
   };
 
@@ -195,7 +195,7 @@ export const ObserverDashboard: React.FC = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading observer dashboard...</span>
+          <span>Loading dashboard...</span>
         </div>
       </div>
     );
@@ -203,170 +203,199 @@ export const ObserverDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleBack}
-                className="border-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 investment-gradient rounded-xl flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold">Observer Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back, {user?.first_name || user?.email}
-                  </p>
-                </div>
+      <DashboardHeader 
+        title="Observer Dashboard" 
+        subtitle="Monitor and oversee platform activities"
+      />
+      
+      <main className="container mx-auto px-4 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Observed Entities
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-blue-600">
+                <Eye className="w-4 h-4" />
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="icon" className="border-2">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Badge className="bg-purple-100 text-purple-600 border-purple-200">
-                Observer
-              </Badge>
-              <Button 
-                onClick={handleLogout}
-                className="btn-secondary"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Log Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{observedEntities.length}</div>
+              <p className="text-xs text-blue-600 font-medium">
+                Under observation
+              </p>
+            </CardContent>
+          </Card>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Observed Entities</h2>
-          <p className="text-muted-foreground">Monitor the entities you have permission to observe.</p>
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Active Alerts
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-red-600">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">
+                {observedEntities.reduce((sum, entity) => sum + entity.alerts_count, 0)}
+              </div>
+              <p className="text-xs text-red-600 font-medium">
+                Require attention
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Reports Generated
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-purple-600">
+                <FileText className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">{reports.length}</div>
+              <p className="text-xs text-purple-600 font-medium">
+                This month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Compliance Score
+              </CardTitle>
+              <div className="p-2 rounded-lg bg-background text-green-600">
+                <Shield className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-1">98%</div>
+              <p className="text-xs text-green-600 font-medium">
+                Platform compliance
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Observed Entities */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle>Monitored Entities</CardTitle>
-                <CardDescription>
-                  {observedEntities.length === 0 ? 'No entities to observe' : 'Entities you are monitoring'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {observedEntities.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Eye className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">No entities assigned for observation</p>
-                    <p className="text-sm text-muted-foreground">
-                      Contact an administrator to be assigned as an observer for specific entities.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {observedEntities.map((entity) => {
-                      const EntityIcon = getEntityIcon(entity.type);
-                      return (
-                        <div key={entity.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <EntityIcon className="w-5 h-5 text-gray-600" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3">
-                                <h4 className="font-semibold">{entity.name}</h4>
-                                <Badge variant="outline" className="text-xs">
-                                  {entity.type.replace('_', ' ')}
-                                </Badge>
-                                <Badge className={`text-xs ${getRiskLevelColor(entity.risk_level)}`}>
-                                  {entity.risk_level} Risk
-                                </Badge>
-                              </div>
-                              <div className="mt-1 text-sm text-muted-foreground">
-                                <span>Status: {entity.status}</span>
-                                <span className="mx-2">•</span>
-                                <span>Last activity: {formatTimeAgo(entity.last_activity)}</span>
-                              </div>
-                            </div>
+        {/* Observed Entities and Reports */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Observed Entities */}
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Observed Entities</CardTitle>
+                  <CardDescription>Entities under your oversight</CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {observedEntities.length > 0 ? (
+                <div className="space-y-4">
+                  {observedEntities.slice(0, 5).map((entity) => {
+                    const EntityIcon = getEntityIcon(entity.type);
+                    return (
+                      <div key={entity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg bg-gray-100">
+                            <EntityIcon className="w-4 h-4" />
                           </div>
-                          <div className="flex items-center space-x-2">
-                            {entity.alerts_count > 0 && (
-                              <Badge variant="destructive" className="text-xs">
-                                {entity.alerts_count} alerts
-                              </Badge>
-                            )}
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4 mr-2" />
-                              View
-                            </Button>
+                          <div className="flex-1">
+                            <h4 className="font-medium">{entity.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {entity.type.replace('_', ' ')} • {formatDate(entity.last_activity)}
+                            </p>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Reports */}
-          <div>
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle>Recent Reports</CardTitle>
-                <CardDescription>
-                  {reports.length === 0 ? 'No reports available' : 'Latest reports for observed entities'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {reports.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No reports available</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {reports.map((report) => (
-                      <div key={report.id} className="p-3 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm">{report.title}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {report.status}
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={getStatusBadgeVariant(entity.status)}>
+                            {entity.status}
                           </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Entity: {report.entity_name}
-                        </p>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <div>Type: {report.type}</div>
-                          <div>Generated: {formatTimeAgo(report.generated_at)}</div>
-                        </div>
-                        <div className="mt-3">
-                          <Button size="sm" className="text-xs w-full">
-                            Download
-                          </Button>
+                          <span className={`text-xs font-medium ${getRiskLevelColor(entity.risk_level)}`}>
+                            {entity.risk_level} Risk
+                          </span>
+                          {entity.alerts_count > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {entity.alerts_count}
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Eye className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No entities under observation</p>
+                  <Button className="mt-4">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Add Entity to Observe
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Reports */}
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Reports</CardTitle>
+                  <CardDescription>Generated oversight reports</CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Generate Report
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {reports.length > 0 ? (
+                <div className="space-y-4">
+                  {reports.slice(0, 5).map((report) => (
+                    <div key={report.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{report.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {report.type} • {formatDate(report.created_at)}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={getStatusBadgeVariant(report.status)}>
+                          {report.status}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No reports generated yet</p>
+                  <Button className="mt-4">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Generate First Report
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
