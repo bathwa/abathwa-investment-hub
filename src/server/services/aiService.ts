@@ -20,16 +20,18 @@ class AIService {
 
       if (userError) throw userError;
 
-      // Fetch milestone data
+      // Fetch milestone data - fix the query
+      const { data: opportunities } = await supabase
+        .from('opportunities')
+        .select('id')
+        .eq('entrepreneur_id', userId);
+
+      const opportunityIds = opportunities?.map(opp => opp.id) || [];
+      
       const { data: milestones, error: milestoneError } = await supabase
         .from('opportunity_milestones')
         .select('*')
-        .in('opportunity_id', 
-          supabase
-            .from('opportunities')
-            .select('id')
-            .eq('entrepreneur_id', userId)
-        );
+        .in('opportunity_id', opportunityIds);
 
       if (milestoneError) throw milestoneError;
 

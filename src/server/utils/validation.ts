@@ -152,4 +152,87 @@ export function validateQuery(schema: Joi.Schema) {
     req.query = value;
     next();
   };
+}
+
+/**
+ * Validation utilities for API requests
+ */
+
+/**
+ * Validate email format
+ */
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Validate password strength
+ */
+export function validatePassword(password: string): boolean {
+  return password.length >= 8;
+}
+
+/**
+ * Validate phone number format
+ */
+export function validatePhone(phone: string): boolean {
+  const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+  return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
+}
+
+/**
+ * Validate URL format
+ */
+export function validateUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validate required fields
+ */
+export function validateRequiredFields(data: Record<string, any>, fields: string[]): string[] {
+  const missingFields: string[] = [];
+  
+  for (const field of fields) {
+    if (!data[field] || (typeof data[field] === 'string' && data[field].trim() === '')) {
+      missingFields.push(field);
+    }
+  }
+  
+  return missingFields;
+}
+
+/**
+ * Validate numeric range
+ */
+export function validateNumericRange(value: number, min: number, max: number): boolean {
+  return value >= min && value <= max;
+}
+
+/**
+ * Validate string length
+ */
+export function validateStringLength(value: string, min: number, max: number): boolean {
+  return value.length >= min && value.length <= max;
+}
+
+/**
+ * Sanitize string input
+ */
+export function sanitizeString(input: string): string {
+  return input.trim().replace(/[<>]/g, '');
+}
+
+/**
+ * Validate UUID format
+ */
+export function validateUuid(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
 } 

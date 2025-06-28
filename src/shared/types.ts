@@ -380,6 +380,15 @@ export interface RegisterRequest {
   admin_key?: string;
 }
 
+export interface UpdateUserRequest {
+  full_name?: string;
+  phone?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  linkedin_url?: string;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;

@@ -8,42 +8,47 @@ const router = Router();
 
 /**
  * @route GET /api/users
- * @desc Get all users (admin only)
- * @access Private (Super Admin)
+ * @desc Get all users with pagination (Admin only)
+ * @access Private (Admin)
  */
-router.get('/', authenticateToken, requireSuperAdmin, async (req, res) => {
+router.get('/', authenticateToken, requireRole(['super_admin']), validateRequest(paginationSchema), async (req, res) => {
   try {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = req.query as PaginationParams;
+    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = req.query as any;
+
     const offset = (page - 1) * limit;
 
-    // Build query
-    let query = supabase
+    const { data: users, error, count } = await supabase
       .from('users')
-      .select('*', { count: 'exact' });
-
-    // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
-
-    const { data: users, error, count } = await query;
+      .select('*', { count: 'exact' })
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(offset, offset + limit - 1);
 
     if (error) {
+      console.error('Fetch users error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to fetch users'
       });
     }
 
-    const response: ApiResponse<User[]> = {
-      success: true,
-      data: users || [],
+    const response: ApiResponse<{
+      users: User[];
       pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit)
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }> = {
+      success: true,
+      data: {
+        users: users || [],
+        pagination: {
+          page: parseInt(page as string),
+          limit: parseInt(limit as string),
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / parseInt(limit as string))
+        }
       }
     };
 
@@ -52,7 +57,7 @@ router.get('/', authenticateToken, requireSuperAdmin, async (req, res) => {
     console.error('Get users error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Failed to fetch users'
     });
   }
 });
@@ -60,15 +65,15 @@ router.get('/', authenticateToken, requireSuperAdmin, async (req, res) => {
 /**
  * @route GET /api/users/:id
  * @desc Get user by ID
- * @access Private (Admin or self)
+ * @access Private (Self or Admin)
  */
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { user } = req as any;
 
-    // Check if user can access this profile
-    if (user.role !== 'super_admin' && user.id !== id) {
+    // Check if user can access this data
+    if (user.role !== 'super_admin' && user.userId !== id) {
       return res.status(403).json({
         success: false,
         error: 'Access denied'
@@ -88,15 +93,17 @@ router.get('/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    res.json({
+    const response: ApiResponse<User> = {
       success: true,
-      data: userData
-    });
+      data: userData as User
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Failed to fetch user'
     });
   }
 });
@@ -104,71 +111,71 @@ router.get('/:id', authenticateToken, async (req, res) => {
 /**
  * @route PUT /api/users/:id
  * @desc Update user profile
- * @access Private (Admin or self)
+ * @access Private (Self or Admin)
  */
 router.put('/:id', authenticateToken, validateRequest(updateUserSchema), async (req, res) => {
   try {
     const { id } = req.params;
+    const updateData: UpdateUserRequest = req.body;
     const { user } = req as any;
-    const updateData = req.body;
 
     // Check if user can update this profile
-    if (user.role !== 'super_admin' && user.id !== id) {
+    if (user.role !== 'super_admin' && user.userId !== id) {
       return res.status(403).json({
         success: false,
         error: 'Access denied'
       });
     }
 
-    // Remove sensitive fields that shouldn't be updated
-    delete updateData.email;
-    delete updateData.role;
-    delete updateData.status;
-
     const { data: updatedUser, error } = await supabase
       .from('users')
-      .update(updateData)
+      .update({
+        ...updateData,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id)
       .select()
       .single();
 
     if (error) {
+      console.error('Update user error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to update user'
       });
     }
 
-    res.json({
+    const response: ApiResponse<User> = {
       success: true,
-      data: updatedUser,
-      message: 'User updated successfully'
-    });
+      data: updatedUser as User
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Failed to update user'
     });
   }
 });
 
 /**
  * @route DELETE /api/users/:id
- * @desc Delete user (admin only)
- * @access Private (Super Admin)
+ * @desc Delete user (Admin only)
+ * @access Private (Admin)
  */
-router.delete('/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
+router.delete('/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Soft delete - update status to deleted
     const { error } = await supabase
       .from('users')
-      .update({ status: 'deleted' })
+      .delete()
       .eq('id', id);
 
     if (error) {
+      console.error('Delete user error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to delete user'
@@ -183,75 +190,177 @@ router.delete('/:id', authenticateToken, requireSuperAdmin, async (req, res) => 
     console.error('Delete user error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Failed to delete user'
+    });
+  }
+});
+
+/**
+ * @route POST /api/users/:id/verify-email
+ * @desc Verify user email (Admin only)
+ * @access Private (Admin)
+ */
+router.post('/:id/verify-email', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .update({
+        email_verified_at: new Date().toISOString(),
+        status: 'active',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Verify email error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to verify email'
+      });
+    }
+
+    const response: ApiResponse<User> = {
+      success: true,
+      data: user as User
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Verify email error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to verify email'
+    });
+  }
+});
+
+/**
+ * @route POST /api/users/:id/verify-phone
+ * @desc Verify user phone (Admin only)
+ * @access Private (Admin)
+ */
+router.post('/:id/verify-phone', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .update({
+        phone_verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Verify phone error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to verify phone'
+      });
+    }
+
+    const response: ApiResponse<User> = {
+      success: true,
+      data: user as User
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Verify phone error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to verify phone'
     });
   }
 });
 
 /**
  * @route POST /api/users/:id/suspend
- * @desc Suspend user (admin only)
- * @access Private (Super Admin)
+ * @desc Suspend user (Admin only)
+ * @access Private (Admin)
  */
-router.post('/:id/suspend', authenticateToken, requireSuperAdmin, async (req, res) => {
+router.post('/:id/suspend', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
     const { id } = req.params;
+    const { reason } = req.body;
 
-    const { error } = await supabase
+    const { data: user, error } = await supabase
       .from('users')
-      .update({ status: 'suspended' })
-      .eq('id', id);
+      .update({
+        status: 'suspended',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) {
+      console.error('Suspend user error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to suspend user'
       });
     }
 
-    res.json({
+    const response: ApiResponse<User> = {
       success: true,
-      message: 'User suspended successfully'
-    });
+      data: user as User
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Suspend user error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Failed to suspend user'
     });
   }
 });
 
 /**
  * @route POST /api/users/:id/activate
- * @desc Activate user (admin only)
- * @access Private (Super Admin)
+ * @desc Activate suspended user (Admin only)
+ * @access Private (Admin)
  */
-router.post('/:id/activate', authenticateToken, requireSuperAdmin, async (req, res) => {
+router.post('/:id/activate', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { error } = await supabase
+    const { data: user, error } = await supabase
       .from('users')
-      .update({ status: 'active' })
-      .eq('id', id);
+      .update({
+        status: 'active',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) {
+      console.error('Activate user error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to activate user'
       });
     }
 
-    res.json({
+    const response: ApiResponse<User> = {
       success: true,
-      message: 'User activated successfully'
-    });
+      data: user as User
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Activate user error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Failed to activate user'
     });
   }
 });

@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       external: [
         '@tanstack/react-query',
+        'next-themes',
       ],
     },
   },

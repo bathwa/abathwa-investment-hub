@@ -619,34 +619,3 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][CompositeTypeName]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      user_role: 'super_admin' | 'entrepreneur' | 'investor' | 'service_provider' | 'observer',
-      user_status: 'pending_verification' | 'active' | 'suspended' | 'deleted',
-      opportunity_category: 'going_concern' | 'order_fulfillment' | 'project_partnership',
-      opportunity_status: 'draft' | 'pending_approval' | 'published' | 'funding_in_progress' | 'funded' | 'in_progress' | 'completed' | 'cancelled',
-      pool_category: 'syndicate' | 'collective' | 'community_development_initiative' | 'company',
-      pool_member_role: 'member' | 'chairperson' | 'secretary' | 'treasurer' | 'investments_officer',
-      transaction_type: 'investment' | 'dividend_payout' | 'capital_payout' | 'fee_payment' | 'escrow_deposit' | 'escrow_withdrawal' | 'service_payment',
-      transaction_status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled',
-      payment_method: 'ecocash' | 'omari' | 'innbucks' | 'bank_transfer' | 'paypal' | 'stripe'
-    },
-  },
-} as const

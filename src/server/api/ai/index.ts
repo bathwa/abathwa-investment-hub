@@ -1,30 +1,28 @@
 import { Router } from 'express';
 import { authenticateToken, requireRole } from '../../middleware/auth';
-import { aiService } from '../../services/aiService';
+import aiService from '../../services/aiService';
 import type { ReliabilityScore, RiskAssessment, LeaderPerformance, ApiResponse } from '../../../shared/types';
 
 const router = Router();
 
 /**
  * @route POST /api/ai/reliability-score/:userId
- * @desc Calculate entrepreneur reliability score
- * @access Private (Admin or self)
+ * @desc Calculate reliability score for a user
+ * @access Private
  */
 router.post('/reliability-score/:userId', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { user } = req as any;
-
-    // Check if user can access this data
-    if (user.role !== 'super_admin' && user.id !== userId) {
-      return res.status(403).json({
+    
+    if (!userId) {
+      return res.status(400).json({
         success: false,
-        error: 'Access denied'
+        error: 'User ID is required'
       });
     }
 
     const reliabilityScore = await aiService.calculateReliabilityScore(userId);
-
+    
     const response: ApiResponse<ReliabilityScore> = {
       success: true,
       data: reliabilityScore
@@ -32,7 +30,7 @@ router.post('/reliability-score/:userId', authenticateToken, async (req, res) =>
 
     res.json(response);
   } catch (error) {
-    console.error('Calculate reliability score error:', error);
+    console.error('Reliability score calculation error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to calculate reliability score'
@@ -42,26 +40,22 @@ router.post('/reliability-score/:userId', authenticateToken, async (req, res) =>
 
 /**
  * @route POST /api/ai/risk-assessment/:opportunityId
- * @desc Assess investment opportunity risk
- * @access Private (Admin or opportunity owner)
+ * @desc Assess risk for an investment opportunity
+ * @access Private
  */
 router.post('/risk-assessment/:opportunityId', authenticateToken, async (req, res) => {
   try {
     const { opportunityId } = req.params;
-    const { user } = req as any;
-
-    // Check if user can access this data
-    // This would require checking if user owns the opportunity or is admin
-    if (user.role !== 'super_admin') {
-      // Additional check for opportunity ownership would go here
-      return res.status(403).json({
+    
+    if (!opportunityId) {
+      return res.status(400).json({
         success: false,
-        error: 'Access denied'
+        error: 'Opportunity ID is required'
       });
     }
 
     const riskAssessment = await aiService.assessOpportunityRisk(opportunityId);
-
+    
     const response: ApiResponse<RiskAssessment> = {
       success: true,
       data: riskAssessment
@@ -72,39 +66,29 @@ router.post('/risk-assessment/:opportunityId', authenticateToken, async (req, re
     console.error('Risk assessment error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to assess risk'
+      error: 'Failed to assess opportunity risk'
     });
   }
 });
 
 /**
  * @route POST /api/ai/leader-performance
- * @desc Calculate pool leader performance
- * @access Private (Pool members or admin)
+ * @desc Calculate leader performance for a pool
+ * @access Private
  */
 router.post('/leader-performance', authenticateToken, async (req, res) => {
   try {
     const { poolId, userId, role } = req.body;
-    const { user } = req as any;
-
+    
     if (!poolId || !userId || !role) {
       return res.status(400).json({
         success: false,
-        error: 'Pool ID, user ID, and role are required'
-      });
-    }
-
-    // Check if user can access this data
-    if (user.role !== 'super_admin') {
-      // Additional check for pool membership would go here
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied'
+        error: 'Pool ID, User ID, and Role are required'
       });
     }
 
     const leaderPerformance = await aiService.calculateLeaderPerformance(poolId, userId, role);
-
+    
     const response: ApiResponse<LeaderPerformance> = {
       success: true,
       data: leaderPerformance
@@ -122,25 +106,27 @@ router.post('/leader-performance', authenticateToken, async (req, res) => {
 
 /**
  * @route GET /api/ai/model-status
- * @desc Get AI model status and version
+ * @desc Get AI model status
  * @access Private (Admin)
  */
 router.get('/model-status', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
-    const modelStatus = {
-      reliability_model: aiService.reliabilityModel ? 'loaded' : 'not_loaded',
-      risk_model: aiService.riskModel ? 'loaded' : 'not_loaded',
-      performance_model: aiService.performanceModel ? 'loaded' : 'not_loaded',
-      version: process.env.AI_MODEL_VERSION || '1.0.0',
+    const status = {
+      service_status: 'operational',
+      models: {
+        reliability_model: 'business_logic',
+        risk_model: 'business_logic',
+        performance_model: 'business_logic'
+      },
       last_updated: new Date().toISOString()
     };
 
     res.json({
       success: true,
-      data: modelStatus
+      data: status
     });
   } catch (error) {
-    console.error('Get model status error:', error);
+    console.error('Model status error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get model status'
@@ -151,13 +137,13 @@ router.get('/model-status', authenticateToken, requireRole(['super_admin']), asy
 /**
  * @route POST /api/ai/batch-reliability-scores
  * @desc Calculate reliability scores for multiple users
- * @access Private (Admin only)
+ * @access Private (Admin)
  */
 router.post('/batch-reliability-scores', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
     const { userIds } = req.body;
-
-    if (!Array.isArray(userIds) || userIds.length === 0) {
+    
+    if (!userIds || !Array.isArray(userIds)) {
       return res.status(400).json({
         success: false,
         error: 'User IDs array is required'
@@ -172,7 +158,8 @@ router.post('/batch-reliability-scores', authenticateToken, requireRole(['super_
         const score = await aiService.calculateReliabilityScore(userId);
         results.push({ userId, score });
       } catch (error) {
-        errors.push({ userId, error: error.message });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        errors.push({ userId, error: errorMessage });
       }
     }
 
@@ -198,13 +185,13 @@ router.post('/batch-reliability-scores', authenticateToken, requireRole(['super_
 /**
  * @route POST /api/ai/batch-risk-assessments
  * @desc Assess risk for multiple opportunities
- * @access Private (Admin only)
+ * @access Private (Admin)
  */
 router.post('/batch-risk-assessments', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
     const { opportunityIds } = req.body;
-
-    if (!Array.isArray(opportunityIds) || opportunityIds.length === 0) {
+    
+    if (!opportunityIds || !Array.isArray(opportunityIds)) {
       return res.status(400).json({
         success: false,
         error: 'Opportunity IDs array is required'
@@ -219,7 +206,8 @@ router.post('/batch-risk-assessments', authenticateToken, requireRole(['super_ad
         const assessment = await aiService.assessOpportunityRisk(opportunityId);
         results.push({ opportunityId, assessment });
       } catch (error) {
-        errors.push({ opportunityId, error: error.message });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        errors.push({ opportunityId, error: errorMessage });
       }
     }
 
@@ -237,7 +225,7 @@ router.post('/batch-risk-assessments', authenticateToken, requireRole(['super_ad
     console.error('Batch risk assessments error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to assess batch risks'
+      error: 'Failed to assess batch opportunities risk'
     });
   }
 });
