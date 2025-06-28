@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -140,21 +139,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, language })
           ? 'admin' 
           : 'investor'; // Default for demo
           
-        switch (userRole) {
-          case 'admin':
-            navigate('/admin-dashboard');
-            break;
-          case 'entrepreneur':
-            navigate('/entrepreneur-dashboard');
-            break;
-          case 'investor':
-            navigate('/investor-dashboard');
-            break;
-          case 'serviceProvider':
-            navigate('/service-provider-dashboard');
-            break;
-          default:
-            navigate('/investor-dashboard');
+        if (userRole === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (userRole === 'entrepreneur') {
+          navigate('/entrepreneur-dashboard');
+        } else if (userRole === 'investor') {
+          navigate('/investor-dashboard');
+        } else if (userRole === 'serviceProvider') {
+          navigate('/service-provider-dashboard');
+        } else {
+          navigate('/investor-dashboard');
         }
       }
     } catch (error) {
