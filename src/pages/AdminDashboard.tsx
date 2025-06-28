@@ -17,12 +17,14 @@ import {
   CreditCard,
   Loader2,
   Plus,
-  Eye
+  Eye,
+  AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { validateApiResponse, filterMockData } from '../lib/validation';
 
 interface PlatformStats {
   totalUsers: number;
@@ -68,46 +70,106 @@ export const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       // Fetch total users
-      const { count: userCount } = await supabase
+      const { count: userCount, error: userError } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true });
 
-      // Fetch active investments
-      const { count: investmentCount } = await supabase
+      if (userError) {
+        console.error('Error fetching users:', userError);
+        toast({
+          title: "Warning",
+          description: "Failed to load user statistics",
+          variant: "destructive",
+        });
+      }
+
+      // Fetch total investment amount (not count)
+      const { data: investmentData, error: investmentError } = await supabase
         .from('transactions')
-        .select('*', { count: 'exact', head: true })
+        .select('amount')
         .eq('type', 'investment')
         .in('status', ['pending', 'processing', 'completed']);
 
+      if (investmentError) {
+        console.error('Error fetching investments:', investmentError);
+        toast({
+          title: "Warning",
+          description: "Failed to load investment statistics",
+          variant: "destructive",
+        });
+      }
+
+      // Filter out any mock data
+      const cleanInvestmentData = filterMockData(investmentData || []);
+      const totalInvestmentAmount = cleanInvestmentData.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
       // Fetch investment pools
-      const { count: poolCount } = await supabase
+      const { count: poolCount, error: poolError } = await supabase
         .from('investment_pools')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
+      if (poolError) {
+        console.error('Error fetching pools:', poolError);
+        toast({
+          title: "Warning",
+          description: "Failed to load pool statistics",
+          variant: "destructive",
+        });
+      }
+
       // Fetch pending approvals
-      const { count: pendingCount } = await supabase
+      const { count: pendingCount, error: pendingError } = await supabase
         .from('opportunities')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending_approval');
 
+      if (pendingError) {
+        console.error('Error fetching pending approvals:', pendingError);
+        toast({
+          title: "Warning",
+          description: "Failed to load approval statistics",
+          variant: "destructive",
+        });
+      }
+
       // Fetch active opportunities
-      const { count: activeOpportunitiesCount } = await supabase
+      const { count: activeOpportunitiesCount, error: opportunitiesError } = await supabase
         .from('opportunities')
         .select('*', { count: 'exact', head: true })
         .in('status', ['published', 'funding_in_progress']);
 
-      // Calculate platform revenue (simplified - would need more complex logic)
-      const { data: revenueData } = await supabase
+      if (opportunitiesError) {
+        console.error('Error fetching opportunities:', opportunitiesError);
+        toast({
+          title: "Warning",
+          description: "Failed to load opportunity statistics",
+          variant: "destructive",
+        });
+      }
+
+      // Calculate platform revenue from completed transactions
+      const { data: revenueData, error: revenueError } = await supabase
         .from('transactions')
         .select('platform_fee')
         .eq('status', 'completed');
 
-      const platformRevenue = revenueData?.reduce((sum, tx) => sum + (tx.platform_fee || 0), 0) || 0;
+      if (revenueError) {
+        console.error('Error fetching revenue:', revenueError);
+        toast({
+          title: "Warning",
+          description: "Failed to load revenue statistics",
+          variant: "destructive",
+        });
+      }
+
+      // Filter out any mock data from revenue
+      const cleanRevenueData = filterMockData(revenueData || []);
+      const platformRevenue = cleanRevenueData.reduce((sum, tx) => sum + (tx.platform_fee || 0), 0);
 
       setStats({
         totalUsers: userCount || 0,
-        activeInvestments: investmentCount || 0,
+        activeInvestments: totalInvestmentAmount,
         platformRevenue,
         investmentPools: poolCount || 0,
         pendingApprovals: pendingCount || 0,
@@ -137,10 +199,36 @@ export const AdminDashboard: React.FC = () => {
 
   const handleQuickAction = (route: string) => {
     // Navigate to specific admin sections
-    if (route === '/admin/users') {
-      navigate('/admin-user-management');
-    } else {
-      navigate(route);
+    switch (route) {
+      case '/admin/users':
+        navigate('/admin-user-management');
+        break;
+      case '/admin/pools':
+        navigate('/admin-pool-management');
+        break;
+      case '/admin/investments':
+        navigate('/admin-investments');
+        break;
+      case '/admin/settings':
+        navigate('/admin-settings');
+        break;
+      case '/admin/reports':
+        navigate('/admin-reports');
+        break;
+      case '/admin/payments':
+        navigate('/admin-payments');
+        break;
+      case '/admin/security':
+        navigate('/admin-security');
+        break;
+      case '/admin/approvals':
+        navigate('/admin-approvals');
+        break;
+      default:
+        toast({
+          title: "Coming Soon",
+          description: "This feature is under development",
+        });
     }
   };
 
@@ -162,32 +250,32 @@ export const AdminDashboard: React.FC = () => {
       route: "/admin/users"
     },
     {
+      title: "Pool Management",
+      description: "Manage investment pools",
+      icon: Building,
+      color: "bg-green-100 text-green-600",
+      route: "/admin/pools"
+    },
+    {
       title: "Investment Oversight",
       description: "Monitor all investment activities",
       icon: BarChart3,
-      color: "bg-green-100 text-green-600",
+      color: "bg-purple-100 text-purple-600",
       route: "/admin/investments"
     },
     {
       title: "Platform Settings",
       description: "Configure system settings",
       icon: Settings,
-      color: "bg-purple-100 text-purple-600",
+      color: "bg-orange-100 text-orange-600",
       route: "/admin/settings"
     },
     {
       title: "Reports & Analytics",
       description: "View detailed reports and analytics",
       icon: FileText,
-      color: "bg-orange-100 text-orange-600",
-      route: "/admin/reports"
-    },
-    {
-      title: "Payment Gateway",
-      description: "Manage payment integrations",
-      icon: CreditCard,
       color: "bg-teal-100 text-teal-600",
-      route: "/admin/payments"
+      route: "/admin/reports"
     },
     {
       title: "Security & Compliance",
