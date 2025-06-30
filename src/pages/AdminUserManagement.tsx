@@ -61,9 +61,13 @@ const AdminUserManagement: React.FC = () => {
         .select(`
           *,
           user_profiles (
+            id,
+            user_id,
             company_name,
             industry,
-            experience_years
+            experience_years,
+            created_at,
+            updated_at
           )
         `)
         .order('created_at', { ascending: false })
@@ -75,7 +79,21 @@ const AdminUserManagement: React.FC = () => {
       const transformedUsers: UserWithProfile[] = (data || []).map(user => ({
         ...user,
         user_profiles: Array.isArray(user.user_profiles) && user.user_profiles.length > 0 
-          ? user.user_profiles[0] 
+          ? {
+              id: user.user_profiles[0].id,
+              user_id: user.user_profiles[0].user_id,
+              company_name: user.user_profiles[0].company_name,
+              industry: user.user_profiles[0].industry,
+              experience_years: user.user_profiles[0].experience_years,
+              created_at: user.user_profiles[0].created_at,
+              updated_at: user.user_profiles[0].updated_at,
+              investment_preferences: undefined,
+              risk_tolerance: undefined,
+              investment_horizon: undefined,
+              minimum_investment: undefined,
+              maximum_investment: undefined,
+              preferred_currencies: undefined
+            }
           : undefined
       }));
 

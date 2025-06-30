@@ -1,5 +1,6 @@
+
 import { supabase } from '../supabaseClient';
-import type { ReliabilityScore, RiskAssessment, LeaderPerformance } from '../../shared/types';
+import type { ReliabilityScore, RiskAssessment, LeaderPerformance, PoolMemberRole } from '../../shared/types';
 
 class AIService {
   constructor() {
@@ -162,38 +163,59 @@ class AIService {
   /**
    * Calculate pool leader performance
    */
-  static async calculatePoolLeaderPerformance(
+  async calculateLeaderPerformance(
     poolId: string, 
     userId: string, 
     role: string
   ): Promise<LeaderPerformance> {
     try {
       // Validate role
-      const validRoles = ['member', 'chairperson', 'secretary', 'treasurer', 'investments_officer'];
-      if (!validRoles.includes(role)) {
+      const validRoles: PoolMemberRole[] = ['member', 'chairperson', 'secretary', 'treasurer', 'investments_officer'];
+      if (!validRoles.includes(role as PoolMemberRole)) {
         throw new Error('Invalid role');
       }
 
-      const typedRole = role as 'member' | 'chairperson' | 'secretary' | 'treasurer' | 'investments_officer';
+      const typedRole = role as PoolMemberRole;
 
-      const { data, error } = await supabase.rpc('calculate_pool_leader_performance', {
-        pool_uuid: poolId,
-        user_uuid: userId,
-        leader_role: typedRole
-      });
+      // For now, return calculated performance based on business logic
+      // In future, this could call a Supabase RPC function
+      const meetingsScore = await this.calculateMeetingsScore(poolId, userId);
+      const announcementsScore = await this.calculateAnnouncementsScore(poolId, userId);
+      const investmentScore = await this.calculateInvestmentScore(poolId, userId);
+      const satisfactionScore = await this.calculateSatisfactionScore(poolId, userId);
 
-      if (error) {
-        throw new Error('Failed to calculate performance');
-      }
+      const overallScore = (meetingsScore + announcementsScore + investmentScore + satisfactionScore) / 4;
 
-      return {
-        overall_score: data || 0,
-        meetings_score: 0,
-        announcements_score: 0,
-        investment_score: 0,
-        satisfaction_score: 0,
-        duties_performed: {}
+      const performance: LeaderPerformance = {
+        overall_score: Math.round(overallScore * 100) / 100,
+        meetings_score: Math.round(meetingsScore * 100) / 100,
+        announcements_score: Math.round(announcementsScore * 100) / 100,
+        investment_score: Math.round(investmentScore * 100) / 100,
+        satisfaction_score: Math.round(satisfactionScore * 100) / 100,
+        duties_performed: {
+          meetings_called: meetingsScore,
+          announcements_made: announcementsScore,
+          investments_managed: investmentScore,
+          member_satisfaction: satisfactionScore
+        }
       };
+
+      // Store performance in database
+      await supabase
+        .from('pool_leader_performance')
+        .upsert({
+          pool_id: poolId,
+          user_id: userId,
+          role: typedRole,
+          overall_score: performance.overall_score,
+          meetings_called: Math.floor(meetingsScore * 10),
+          announcements_made: Math.floor(announcementsScore * 10),
+          investment_success_rate: performance.investment_score,
+          member_satisfaction_score: performance.satisfaction_score,
+          last_evaluation_date: new Date().toISOString()
+        });
+
+      return performance;
     } catch (error) {
       console.error('Calculate leader performance error:', error);
       throw error;
@@ -231,6 +253,62 @@ class AIService {
       new Date(m.completed_date) <= new Date(m.due_date)
     ).length;
     return (onTime / milestones.length) * 100;
+  }
+
+  private async calculateMeetingsScore(poolId: string, userId: string): Promise<number> {
+    try {
+      const { count } = await supabase
+        .from('pool_activities')
+        .select('*', { count: 'exact' })
+        .eq('pool_id', poolId)
+        .eq('initiated_by', userId)
+        .eq('activity_type', 'meeting');
+      
+      return Math.min((count || 0) * 10, 100); // Scale to 0-100
+    } catch (error) {
+      return 50; // Default score
+    }
+  }
+
+  private async calculateAnnouncementsScore(poolId: string, userId: string): Promise<number> {
+    try {
+      const { count } = await supabase
+        .from('pool_activities')
+        .select('*', { count: 'exact' })
+        .eq('pool_id', poolId)
+        .eq('initiated_by', userId)
+        .eq('activity_type', 'announcement');
+      
+      return Math.min((count || 0) * 5, 100); // Scale to 0-100
+    } catch (error) {
+      return 50; // Default score
+    }
+  }
+
+  private async calculateInvestmentScore(poolId: string, userId: string): Promise<number> {
+    try {
+      // Calculate based on successful investments
+      return 70; // Default score for now
+    } catch (error) {
+      return 50; // Default score
+    }
+  }
+
+  private async calculateSatisfactionScore(poolId: string, userId: string): Promise<number> {
+    try {
+      const { data: votes } = await supabase
+        .from('pool_votes')
+        .select('rating')
+        .eq('pool_id', poolId)
+        .eq('target_user_id', userId);
+      
+      if (!votes || votes.length === 0) return 50;
+      
+      const avgRating = votes.reduce((sum, vote) => sum + (vote.rating || 0), 0) / votes.length;
+      return (avgRating / 5) * 100; // Convert 1-5 rating to 0-100 score
+    } catch (error) {
+      return 50; // Default score
+    }
   }
 
   private calculateFinancialRisk(opportunity: any): number {
