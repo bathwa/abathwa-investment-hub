@@ -1,16 +1,17 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   ArrowLeft,
   LogOut,
-  Bell,
   User,
   Settings
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ThemeToggle } from './ThemeToggle';
+import { NotificationBell } from './NotificationSystem';
 
 interface DashboardHeaderProps {
   title: string;
@@ -88,11 +89,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             
             <ThemeToggle />
             
-            {showNotifications && (
-              <Button variant="outline" size="icon" className="border-2">
-                <Bell className="w-4 h-4" />
-              </Button>
-            )}
+            {showNotifications && <NotificationBell />}
             
             {showUserMenu && user && (
               <div className="flex items-center space-x-3">
@@ -135,4 +132,4 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
     </header>
   );
-}; 
+};

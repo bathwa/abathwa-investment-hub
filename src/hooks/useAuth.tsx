@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
 import type { User, UserRole } from '../shared/types';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -9,6 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, role: UserRole, profileData?: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,6 +46,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return roleDashboardMap[role];
   };
 
+  // Fetch user profile from database
+  const fetchUserProfile = async (userId: string): Promise<User | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      return null;
+    }
+  };
+
+  // Refresh user data
+  const refreshUser = async () => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const userProfile = await fetchUserProfile(authUser.id);
+      setUser(userProfile);
+    }
+  };
+
   // Handle post-login redirection
   const handlePostLoginRedirect = (user: User) => {
     const dashboardRoute = getDashboardRoute(user.role);
@@ -51,95 +84,113 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const from = location.state?.from?.pathname;
     
     if (from && from !== '/' && from !== dashboardRoute) {
-      // User was trying to access a specific page, redirect there
       navigate(from, { replace: true });
     } else {
-      // Default redirect to user's dashboard
       navigate(dashboardRoute, { replace: true });
     }
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.email);
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          const userProfile = await fetchUserProfile(session.user.id);
+          if (userProfile && isMounted) {
+            setUser(userProfile);
+            handlePostLoginRedirect(userProfile);
+            toast.success(`Welcome back, ${userProfile.full_name}!`);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          if (isMounted) {
+            setUser(null);
+            navigate('/', { replace: true });
+            toast.info('You have been signed out');
+          }
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Refresh user profile when token is refreshed
+          const userProfile = await fetchUserProfile(session.user.id);
+          if (userProfile && isMounted) {
+            setUser(userProfile);
+          }
+        }
+
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    );
+
     // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          // Fetch user profile from our users table
-          const { data: userProfile, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (userProfile && !error) {
+          const userProfile = await fetchUserProfile(session.user.id);
+          if (userProfile && isMounted) {
             setUser(userProfile);
           }
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     getInitialSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Fetch user profile
-          const { data: userProfile, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (userProfile && !error) {
-            setUser(userProfile);
-            handlePostLoginRedirect(userProfile);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          navigate('/', { replace: true });
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (!error) {
-        // User will be redirected in the auth state change listener
-        return { error: null };
+      if (error) {
+        toast.error(error.message);
+        return { error };
       }
 
-      return { error };
+      return { error: null };
     } catch (error) {
+      console.error('Sign in error:', error);
+      toast.error('An unexpected error occurred during sign in');
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, role: UserRole, profileData?: any) => {
     try {
+      setLoading(true);
+      
       // Check if this is an admin registration
       const isAdminEmail = email === 'abathwabiz@gmail.com' || email === 'admin@abathwa.com';
       
       if (isAdminEmail) {
-        // Validate admin key
         if (!profileData?.adminKey || profileData.adminKey !== 'vvv.ndev') {
-          return { error: { message: 'Invalid Admin Key. Please enter the correct admin key.' } };
+          const error = { message: 'Invalid Admin Key. Please enter the correct admin key.' };
+          toast.error(error.message);
+          return { error };
         }
-        // Force role to super_admin for admin emails
         role = 'super_admin';
       }
 
@@ -147,8 +198,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             role,
+            full_name: `${profileData?.first_name || ''} ${profileData?.last_name || ''}`.trim(),
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             phone: profileData?.phone || '',
@@ -157,59 +210,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (error) {
+        toast.error(error.message);
         return { error };
       }
 
-      if (data.user) {
-        // Create user profile in our users table
-        const userProfileData = {
-          id: data.user.id,
-          email: data.user.email!,
-          full_name: `${profileData?.first_name || ''} ${profileData?.last_name || ''}`.trim(),
-          first_name: profileData?.first_name || '',
-          last_name: profileData?.last_name || '',
-          phone: profileData?.phone || '',
-          role,
-          status: 'pending_verification',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([userProfileData]);
-
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          return { error: profileError };
-        }
-
-        // Create extended profile if role-specific data is provided
-        if (role === 'investor' || role === 'entrepreneur' || role === 'service_provider') {
-          const extendedProfileData = {
-            user_id: data.user.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-
-          const { error: extendedProfileError } = await supabase
-            .from('user_profiles')
-            .insert([extendedProfileData]);
-
-          if (extendedProfileError) {
-            console.error('Error creating extended profile:', extendedProfileError);
-          }
-        }
+      if (data.user && !data.user.email_confirmed_at) {
+        toast.success('Please check your email to confirm your account');
       }
 
       return { error: null };
     } catch (error) {
+      console.error('Sign up error:', error);
+      toast.error('An unexpected error occurred during sign up');
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('Error signing out');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
@@ -218,6 +246,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signIn,
     signUp,
     signOut,
+    refreshUser,
   };
 
   return (
@@ -225,4 +254,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};
