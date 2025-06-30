@@ -8,16 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-interface LanguageToggleProps {
-  language?: 'en' | 'nd';
-  onLanguageChange?: (language: 'en' | 'nd') => void;
-}
-
-export const LanguageToggle: React.FC<LanguageToggleProps> = ({ 
-  language = 'en', 
-  onLanguageChange 
-}) => {
+export const LanguageToggle: React.FC = () => {
+  const { language, setLanguage } = useLanguage();
+  
   const languages = {
     en: { name: 'English', flag: '🇺🇸' },
     nd: { name: 'isiNdebele', flag: '🇿🇼' }
@@ -34,7 +29,7 @@ export const LanguageToggle: React.FC<LanguageToggleProps> = ({
         {Object.entries(languages).map(([code, lang]) => (
           <DropdownMenuItem
             key={code}
-            onClick={() => onLanguageChange?.(code as 'en' | 'nd')}
+            onClick={() => setLanguage(code as 'en' | 'nd')}
             className={`cursor-pointer ${language === code ? 'bg-muted' : ''}`}
           >
             <span className="mr-2">{lang.flag}</span>
