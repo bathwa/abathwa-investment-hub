@@ -3,6 +3,9 @@
 // SHARED TYPES FOR ABATHWA CAPITAL INVESTMENT PORTAL
 // =====================================================
 
+// Database Json type helper
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
 // User Types
 export type UserRole = 'super_admin' | 'entrepreneur' | 'investor' | 'service_provider' | 'observer';
 export type UserStatus = 'pending_verification' | 'active' | 'suspended' | 'deleted';

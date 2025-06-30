@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Modern Investment Portal Design System */
+/* Modern Southern African Traditional Design System */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -15,80 +15,87 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Modern color palette */
-    --primary: 217 91% 60%;
+    /* Southern African Traditional Color Palette */
+    --primary: 25 85% 50%; /* Warm terracotta */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 35 30% 85%; /* Soft sand */
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 45 25% 92%; /* Light cream */
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 262 83% 58%;
+    --accent: 15 95% 60%; /* Vibrant orange */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
+    --border: 35 20% 88%;
+    --input: 35 20% 88%;
+    --ring: 25 85% 50%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    /* Enhanced color system */
-    --blue-gradient: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(262 83% 58%) 100%);
-    --purple-gradient: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(25 95% 53%) 100%);
-    --orange-gradient: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(217 91% 60%) 100%);
+    /* Traditional African color system */
+    --earth-brown: 20 35% 25%;
+    --warm-terracotta: 25 85% 50%;
+    --sunset-orange: 15 95% 60%;
+    --golden-ochre: 45 75% 55%;
+    --deep-amber: 35 85% 45%;
+    --clay-red: 10 80% 45%;
+    --baobab-bark: 30 25% 35%;
+    --acacia-green: 85 35% 40%;
+    --savanna-gold: 50 60% 70%;
+    --ubuntu-blue: 210 75% 55%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 25 85% 50%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent: 35 30% 92%;
     --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-border: 35 20% 88%;
+    --sidebar-ring: 25 85% 50%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 30 15% 8%;
+    --foreground: 35 25% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 30 15% 8%;
+    --card-foreground: 35 25% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 30 15% 8%;
+    --popover-foreground: 35 25% 95%;
 
-    --primary: 217 91% 60%;
+    --primary: 25 85% 50%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 30 20% 15%;
+    --secondary-foreground: 35 25% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 30 20% 15%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 15 95% 60%;
+    --accent-foreground: 35 25% 95%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217 91% 60%;
+    --border: 30 20% 15%;
+    --input: 30 20% 15%;
+    --ring: 25 85% 50%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-background: 30 15% 8%;
+    --sidebar-foreground: 35 25% 85%;
+    --sidebar-primary: 25 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 30 20% 12%;
+    --sidebar-accent-foreground: 35 25% 85%;
+    --sidebar-border: 30 20% 15%;
+    --sidebar-ring: 25 85% 50%;
   }
 }
 
@@ -100,6 +107,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -109,16 +117,29 @@
 }
 
 @layer utilities {
-  .modern-gradient {
-    background: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(262 83% 58%) 50%, hsl(25 95% 53%) 100%);
+  /* Southern African Traditional Patterns */
+  .traditional-pattern {
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(var(--warm-terracotta)) 2px, transparent 2px),
+      radial-gradient(circle at 75% 75%, hsl(var(--golden-ochre)) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
   }
-  
-  .hero-gradient {
+
+  .african-gradient {
     background: linear-gradient(135deg, 
-      hsl(217 91% 60%) 0%, 
-      hsl(262 83% 58%) 35%, 
-      hsl(25 95% 53%) 70%,
-      hsl(174 72% 56%) 100%
+      hsl(var(--warm-terracotta)) 0%, 
+      hsl(var(--sunset-orange)) 35%, 
+      hsl(var(--golden-ochre)) 70%,
+      hsl(var(--deep-amber)) 100%
+    );
+  }
+
+  .ubuntu-gradient {
+    background: linear-gradient(135deg, 
+      hsl(var(--ubuntu-blue)) 0%, 
+      hsl(var(--acacia-green)) 50%, 
+      hsl(var(--savanna-gold)) 100%
     );
   }
 
@@ -127,27 +148,27 @@
   }
 
   .card-hover {
-    @apply transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:scale-105;
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02];
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-orange-500 hover:from-blue-700 hover:via-purple-700 hover:to-orange-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-0;
+    @apply african-gradient text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-0;
   }
 
   .btn-secondary {
-    @apply bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white hover:bg-white dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 shadow-md hover:shadow-lg transition-all duration-300 backdrop-blur-sm;
+    @apply bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white hover:bg-white dark:hover:bg-gray-700 border-2 border-primary/20 shadow-md hover:shadow-lg transition-all duration-300 backdrop-blur-sm;
   }
 
-  .icon-modern {
-    @apply text-blue-500 drop-shadow-sm;
+  .icon-traditional {
+    @apply text-primary drop-shadow-sm;
   }
 
   .text-gradient {
-    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-orange-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary via-accent to-amber-500 bg-clip-text text-transparent;
   }
 
   .glow-effect {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
   }
 
   .animate-float {
@@ -156,7 +177,7 @@
 
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-10px); }
   }
 
   .animate-pulse-glow {
@@ -164,7 +185,80 @@
   }
 
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-    50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(147, 51, 234, 0.3); }
+    0%, 100% { box-shadow: 0 0 20px rgba(251, 146, 60, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(251, 146, 60, 0.6), 0 0 40px rgba(234, 88, 12, 0.3); }
+  }
+
+  /* Offline-first optimizations */
+  .optimized-image {
+    @apply transition-opacity duration-300;
+    content-visibility: auto;
+    contain-intrinsic-size: 200px 150px;
+  }
+
+  .skeleton-loading {
+    @apply bg-gradient-to-r from-muted via-muted/50 to-muted animate-pulse;
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Network status indicators */
+  .network-status-online {
+    @apply bg-green-500 text-white;
+  }
+
+  .network-status-offline {
+    @apply bg-red-500 text-white;
+  }
+
+  .network-status-slow {
+    @apply bg-yellow-500 text-white;
+  }
+
+  /* Fast loading utilities */
+  .fade-in-fast {
+    animation: fadeInFast 0.2s ease-out;
+  }
+
+  @keyframes fadeInFast {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* Traditional African geometric patterns */
+.geometric-pattern {
+  background-image: 
+    linear-gradient(45deg, hsl(var(--warm-terracotta))/10 25%, transparent 25%),
+    linear-gradient(-45deg, hsl(var(--warm-terracotta))/10 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, hsl(var(--golden-ochre))/10 75%),
+    linear-gradient(-45deg, transparent 75%, hsl(var(--golden-ochre))/10 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  .card-hover {
+    @apply hover:scale-100 hover:translate-y-0; /* Disable transforms on mobile for performance */
+  }
+  
+  .animate-float {
+    animation: none; /* Disable animations on mobile to save battery */
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .card-hover,
+  .animate-float,
+  .animate-pulse-glow {
+    animation: none;
+    transition: none;
   }
 }
