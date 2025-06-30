@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../../supabaseClient';
 import { authenticateToken, requireRole, requireSuperAdmin } from '../../middleware/auth';
 import { validateRequest, updateUserSchema, paginationSchema } from '../../utils/validation';
-import type { User, UserProfile, ApiResponse, PaginationParams } from '../../../shared/types';
+import type { User, UserProfile, ApiResponse, PaginationParams, UpdateUserRequest } from '../../../shared/types';
 
 const router = Router();
 
@@ -582,4 +582,4 @@ router.get('/:id/investments', authenticateToken, async (req, res) => {
   }
 });
 
-export default router; 
+export default router;

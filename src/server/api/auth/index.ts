@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../../supabaseClient';
 import { authenticateToken, requireSuperAdmin } from '../../middleware/auth';
-import { validateRequest, registerSchema, loginSchema } from '../../utils/validation';
+import { validateRequest, registerSchema, loginSchema, validateEmail, validatePassword } from '../../utils/validation';
 import type { RegisterRequest, LoginRequest, AuthResponse, ApiResponse } from '../../../shared/types';
 
 const router = Router();
@@ -456,4 +456,4 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-export default router; 
+export default router;

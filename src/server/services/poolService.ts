@@ -64,11 +64,16 @@ export class PoolService {
   static async createPool(poolData: Partial<InvestmentPool>, userId: string): Promise<InvestmentPool> {
     try {
       const pool = {
-        ...poolData,
+        name: poolData.name || '',
+        description: poolData.description,
+        category: poolData.category || 'collective',
+        target_amount: poolData.target_amount || 0,
+        currency: poolData.currency || 'USD',
+        minimum_contribution: poolData.minimum_contribution,
+        maximum_contribution: poolData.maximum_contribution,
         created_by: userId,
         current_amount: 0,
-        status: 'active',
-        category: poolData.category || 'collective' // Ensure category is set
+        status: 'active'
       };
 
       const { data: newPool, error } = await supabase
@@ -272,8 +277,14 @@ export class PoolService {
   /**
    * Update pool member role
    */
-  static async updateMemberRole(poolId: string, userId: string, newRole: PoolMemberRole, updatedBy: string): Promise<PoolMember> {
+  static async updateMemberRole(poolId: string, userId: string, newRole: string, updatedBy: string): Promise<PoolMember> {
     try {
+      // Validate role
+      const validRoles = ['member', 'chairperson', 'secretary', 'treasurer', 'investments_officer'];
+      if (!validRoles.includes(newRole)) {
+        throw new Error('Invalid role');
+      }
+
       // Check if updater has permission (pool creator or admin)
       const { data: pool, error: poolError } = await supabase
         .from('investment_pools')
@@ -293,7 +304,7 @@ export class PoolService {
 
       const { data: member, error } = await supabase
         .from('pool_members')
-        .update({ role: newRole })
+        .update({ role: newRole as any })
         .eq('pool_id', poolId)
         .eq('user_id', userId)
         .select()

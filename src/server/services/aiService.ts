@@ -162,62 +162,41 @@ class AIService {
   /**
    * Calculate pool leader performance
    */
-  async calculateLeaderPerformance(
+  static async calculatePoolLeaderPerformance(
     poolId: string, 
     userId: string, 
     role: string
   ): Promise<LeaderPerformance> {
     try {
-      // Fetch leader performance data
-      const { data: performance, error: perfError } = await supabase
-        .from('pool_leader_performance')
-        .select('*')
-        .eq('pool_id', poolId)
-        .eq('user_id', userId)
-        .eq('role', role)
-        .single();
+      // Validate role
+      const validRoles = ['member', 'chairperson', 'secretary', 'treasurer', 'investments_officer'];
+      if (!validRoles.includes(role)) {
+        throw new Error('Invalid role');
+      }
 
-      if (perfError) throw perfError;
+      const typedRole = role as 'member' | 'chairperson' | 'secretary' | 'treasurer' | 'investments_officer';
 
-      // Calculate scores
-      const meetingsScore = Math.min(performance.meetings_called * 10, 100);
-      const announcementsScore = Math.min(performance.announcements_made * 15, 100);
-      const investmentScore = performance.investment_success_rate;
-      const satisfactionScore = performance.member_satisfaction_score * 100;
+      const { data, error } = await supabase.rpc('calculate_pool_leader_performance', {
+        pool_uuid: poolId,
+        user_uuid: userId,
+        leader_role: typedRole
+      });
 
-      // Calculate overall score
-      const overallScore = (
-        meetingsScore * 0.25 +
-        announcementsScore * 0.25 +
-        investmentScore * 0.3 +
-        satisfactionScore * 0.2
-      );
-
-      // Update performance record
-      await supabase
-        .from('pool_leader_performance')
-        .update({ 
-          overall_score: overallScore,
-          last_evaluation_date: new Date().toISOString()
-        })
-        .eq('id', performance.id);
+      if (error) {
+        throw new Error('Failed to calculate performance');
+      }
 
       return {
-        overall_score: Math.round(overallScore * 100) / 100,
-        meetings_score: Math.round(meetingsScore * 100) / 100,
-        announcements_score: Math.round(announcementsScore * 100) / 100,
-        investment_score: Math.round(investmentScore * 100) / 100,
-        satisfaction_score: Math.round(satisfactionScore * 100) / 100,
-        duties_performed: {
-          'meetings_called': performance.meetings_called,
-          'announcements_made': performance.announcements_made,
-          'investment_decisions': performance.investment_success_rate,
-          'member_satisfaction': performance.member_satisfaction_score
-        }
+        overall_score: data || 0,
+        meetings_score: 0,
+        announcements_score: 0,
+        investment_score: 0,
+        satisfaction_score: 0,
+        duties_performed: {}
       };
     } catch (error) {
-      console.error('Error calculating leader performance:', error);
-      throw new Error('Failed to calculate leader performance');
+      console.error('Calculate leader performance error:', error);
+      throw error;
     }
   }
 
@@ -315,4 +294,4 @@ class AIService {
 }
 
 export const aiService = new AIService();
-export default aiService; 
+export default aiService;

@@ -90,6 +90,17 @@ router.get('/', validateRequest(searchFiltersSchema), validateRequest(pagination
       });
     }
 
+    // Transform the data to ensure proper types
+    const transformedOpportunities: Opportunity[] = (opportunities || []).map(opp => ({
+      ...opp,
+      ai_insights: typeof opp.ai_insights === 'string' 
+        ? JSON.parse(opp.ai_insights) 
+        : opp.ai_insights || {},
+      raised_amount: 0, // This would come from aggregated investment data
+      investors_count: 0, // This would come from aggregated investment data  
+      days_left: opp.expires_at ? Math.max(0, Math.ceil((new Date(opp.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null
+    }));
+
     const response: ApiResponse<{
       opportunities: Opportunity[];
       pagination: {
@@ -101,7 +112,7 @@ router.get('/', validateRequest(searchFiltersSchema), validateRequest(pagination
     }> = {
       success: true,
       data: {
-        opportunities: opportunities || [],
+        opportunities: transformedOpportunities,
         pagination: {
           page: parseInt(page as string),
           limit: parseInt(limit as string),
@@ -464,4 +475,4 @@ router.get('/:id/milestones', async (req, res) => {
   }
 });
 
-export default router; 
+export default router;
