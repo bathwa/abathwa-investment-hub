@@ -1,4 +1,3 @@
-
 // =====================================================
 // SHARED TYPES FOR ABATHWA CAPITAL INVESTMENT PORTAL
 // =====================================================
@@ -286,7 +285,7 @@ export interface ServiceRequest {
   title: string;
   description: string;
   service_type: string;
-  budget_range?: Record<string, any>;
+  budget_range?: Record<string, any>; // Changed from Json to Record<string, any>
   deadline?: string;
   status: string;
   created_at: string;
@@ -516,4 +515,4 @@ export interface SearchResult<T> {
   items: T[];
   total: number;
   filters: SearchFilters;
-} 
+}

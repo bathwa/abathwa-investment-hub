@@ -43,7 +43,7 @@ const translations = {
         description: "Your investments protected with community-driven security and traditional trust principles."
       },
       transparent: {
-        title: "Complete Transparency",
+        title: "Complete Transparency",  
         description: "Track every investment with full visibility, honoring our commitment to openness and accountability."
       },
       community: {
@@ -58,7 +58,7 @@ const translations = {
         description: "Discover authentic African opportunities, form investment circles, and grow wealth together with advanced analytics."
       },
       entrepreneur: {
-        title: "Entrepreneurs",
+        title: "Entrepreneurs", 
         description: "Showcase your vision, connect with investors, and build your business with community support and smart matching."
       },
       serviceProvider: {
@@ -73,50 +73,45 @@ const translations = {
   },
   nd: {
     hero: {
-      title: "Ukuqinisa Utyalo-mali Nakuphuhlisa e-Afrika",
-      subtitle: "Ukuhlanganisa abatyali-mali, oosomashishini, nababoneleli benkonzo kwindawo ekhuselekileyo nekhangelekayo eyenzelwe ukukhula.",
-      cta: "Qalisa Namhlanje",
-      signIn: "Ngena"
+      title: "Ubuntu Investment Hub",
+      subtitle: "Ukudibanisa abatyali-mali baseAfrika, oosomashishini, noluntu ngokusebenzisa izithethe zemveli nobuchwepheshe banamhlanje.",
+      cta: "Zijoyine Uluntu Lwethu",
+      signIn: "Ngena",
+      badge: "Ngokuziqhenya nge-Afrika • Yenzelwe i-Afrika"
     },
     features: {
-      title: "Kutheni Ukhetha i-Abathwa Investment Hub?",
+      title: "Kutheni Ukhetha i-Ubuntu Investment Hub?",
       secure: {
-        title: "Ukhuseleko Lwasebhankini",
-        description: "Utyalo-mali lwakho nedatha yakho zikhuselelwe ngeenkqubo zokhuseleko zoshishino kunye nokhuseleko oluphezulu."
+        title: "Ukhuseleko Lwe-Ubuntu",
+        description: "Utyalo-mali lwakho lukhuselelwe ngokhuseleko oluqhutywa luluntu kunye nemithetho yothemba lwemveli."
       },
       transparent: {
         title: "Ukubonakala Okupheleleyo",
-        description: "Landela lonke utyalo-mali, izinto ezibalulekileyo, nengeniso ngokubona okupheleleyo kunye neengxelo zexeshana."
+        description: "Landela lonke utyalo-mali ngokubona okupheleleyo, sihlonipha isibophelelo sethu sokuvula nokuthembeka."
       },
       community: {
-        title: "Uluntu Oluphumeleleyo",
-        description: "Zijoyine kwiqonga labatyali-mali abacingayo phambili, oosomashishini nababoneleli benkonzo kulo lonke elaseAfrika."
+        title: "Uluntu Olomeleleyo",
+        description: "Zijoyine kwiqonga labatyali-mali base-Afrika kunye noosomashishini abakha ubutyebi kunye ngokusebenzisa imigaqo ye-Ubuntu."
       }
     },
     roles: {
-      title: "Yenzelwe Bonke Ababandakanyekayo",
+      title: "Yenzelwe Bonke Amalungu Oluntu Lwethu",
       investor: {
         title: "Abatyali-mali",
-        description: "Fumana amathuba aqinisekisiweyo, wenze amaqela otyalo-mali, ulandele ipotifoliyo yakho ngeengcaciso eziphambili kunye nezixhobo ze-AI."
+        description: "Fumana amathuba okwenyani ase-Afrika, wenze amaqela otyalo-mali, ukhule ubutyebi kunye nge-analytics ephambili."
       },
       entrepreneur: {
         title: "Oosomashishini",
-        description: "Bonisa amashishini akho, unxibelelane nabatyali-mali, ulawule uhambo lwakho lokufumana imali ngeenkqubo zokudibanisa ezikrelekrele."
+        description: "Bonisa umbono wakho, unxibelelane nabatyali-mali, kwaye wakhe ishishini lakho ngenkxaso yoluntu kunye nokumatshwa okukhaliphileyo."
       },
       serviceProvider: {
         title: "Ababoneleli Benkonzo",
-        description: "Nikela ngobuchule bakho, tyikitya izivumelwano, wakhe iqonga lakho lobuchwepheshe ngaphakathi kwindawo yethu ethenjwayo."
+        description: "Nikela ngobuchule bakho, wakhe ukuthembana ngokutyikitya kunye, ukhulise iqonga lakho lobuchule kwindawo yethu."
       }
     },
     mission: {
-      title: "Injongo Yethu",
-      description: "Ukwenza amathuba otyalo-mali e-Afrika abe lula kuye wonke umntu ngezobuchwepheshe, ukubonakala, kunye nophuhliso oluqhutywa luluntu."
-    },
-    footer: {
-      support: "Inkxaso",
-      phone: "Ifowuni",
-      email: "I-imeyili",
-      whatsapp: "I-WhatsApp"
+      title: "Injongo Yethu Ye-Ubuntu",
+      description: "Ukwenza amathuba otyalo-mali e-Afrika abe lula kuye wonke umntu ngobuchwepheshe, ukubonakala, kunye ne-Ubuntu - ukukholelwa ukuba sonke sidityanisiwe."
     }
   }
 };

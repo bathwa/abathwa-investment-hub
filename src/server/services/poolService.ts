@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient';
-import type { InvestmentPool, PoolMember, ApiResponse, PaginationParams } from '../../shared/types';
+import type { InvestmentPool, PoolMember, ApiResponse, PaginationParams, PoolMemberRole } from '../../shared/types';
 
 export class PoolService {
   /**
@@ -67,7 +67,8 @@ export class PoolService {
         ...poolData,
         created_by: userId,
         current_amount: 0,
-        status: 'active'
+        status: 'active',
+        category: poolData.category || 'collective' // Ensure category is set
       };
 
       const { data: newPool, error } = await supabase
@@ -271,7 +272,7 @@ export class PoolService {
   /**
    * Update pool member role
    */
-  static async updateMemberRole(poolId: string, userId: string, newRole: string, updatedBy: string): Promise<PoolMember> {
+  static async updateMemberRole(poolId: string, userId: string, newRole: PoolMemberRole, updatedBy: string): Promise<PoolMember> {
     try {
       // Check if updater has permission (pool creator or admin)
       const { data: pool, error: poolError } = await supabase
@@ -348,4 +349,4 @@ export class PoolService {
       throw error;
     }
   }
-} 
+}
