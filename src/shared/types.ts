@@ -1,3 +1,4 @@
+
 // =====================================================
 // SHARED TYPES FOR ABATHWA CAPITAL INVESTMENT PORTAL
 // =====================================================
@@ -44,6 +45,11 @@ export interface UserProfile {
   updated_at: string;
 }
 
+// For admin user management - matches the actual database structure
+export interface UserWithProfile extends User {
+  user_profiles?: UserProfile; // Single profile, not array
+}
+
 // Opportunity Types
 export type OpportunityCategory = 'going_concern' | 'order_fulfillment' | 'project_partnership';
 export type OpportunityStatus = 'draft' | 'pending_approval' | 'published' | 'funding_in_progress' | 'funded' | 'in_progress' | 'completed' | 'cancelled';
@@ -73,6 +79,10 @@ export interface Opportunity {
   updated_at: string;
   published_at?: string;
   expires_at?: string;
+  // Dashboard specific fields (computed)
+  raised_amount?: number;
+  investors_count?: number;
+  days_left?: number;
 }
 
 export interface OpportunityMilestone {
@@ -343,6 +353,26 @@ export interface AuditLog {
   new_values?: Record<string, any>;
   ip_address?: string;
   user_agent?: string;
+  created_at: string;
+}
+
+// Activity Type for Dashboards
+export interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  created_at: string;
+}
+
+// Project Types for Service Provider Dashboard
+export interface Project {
+  id: string;
+  name: string;
+  service_type: string;
+  status: string;
+  budget: number;
+  progress: number;
+  days_left: number;
   created_at: string;
 }
 

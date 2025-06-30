@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -378,9 +377,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language }) => {
       {/* Auth Modal */}
       {authModal && (
         <AuthModal 
-          type={authModal} 
           onClose={() => setAuthModal(null)}
-          language={language}
         />
       )}
     </div>
