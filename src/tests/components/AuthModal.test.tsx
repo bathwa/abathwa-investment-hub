@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/dom';
 import { describe, it, expect, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AuthModal from '../../components/AuthModal';
@@ -73,4 +74,4 @@ describe('AuthModal', () => {
     
     expect(onClose).toHaveBeenCalled();
   });
-}); 
+});

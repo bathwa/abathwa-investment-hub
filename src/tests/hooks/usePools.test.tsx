@@ -87,4 +87,4 @@ describe('usePools', () => {
 
     expect(result.current.error).toBe('Network error');
   });
-}); 
+});
