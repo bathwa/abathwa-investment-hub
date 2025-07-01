@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'nd';
 
@@ -9,153 +9,94 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-// Translation keys and values
 const translations = {
   en: {
-    // Navigation
-    'nav.dashboard': 'Dashboard',
-    'nav.opportunities': 'Opportunities',
-    'nav.investments': 'My Investments',
-    'nav.pools': 'Investment Pools',
-    'nav.serviceProviders': 'Service Providers',
-    'nav.reports': 'Reports',
-    'nav.profile': 'Profile',
-    'nav.settings': 'Settings',
-    'nav.users': 'User Management',
-    
-    // Common actions
-    'action.signIn': 'Sign In',
-    'action.signUp': 'Sign Up',
-    'action.create': 'Create',
-    'action.edit': 'Edit',
-    'action.delete': 'Delete',
-    'action.save': 'Save',
-    'action.cancel': 'Cancel',
-    'action.submit': 'Submit',
-    'action.viewDetails': 'View Details',
-    
     // Landing page
-    'landing.title': 'Abathwa Investment Hub',
-    'landing.subtitle': 'Connecting investors, entrepreneurs, and communities through traditional values and modern technology.',
-    'landing.cta': 'Join Our Community',
-    'landing.features.secure.title': 'Ubuntu Security',
-    'landing.features.secure.description': 'Your investments protected with community-driven security and traditional trust principles.',
-    'landing.features.transparent.title': 'Complete Transparency',
-    'landing.features.transparent.description': 'Track every investment with full visibility, honoring our commitment to openness.',
-    'landing.features.community.title': 'Strong Community',
-    'landing.features.community.description': 'Join a network building wealth together through Ubuntu principles.',
+    'landing.title': 'Abathwa Hub',
+    'landing.subtitle': 'Connecting investors, entrepreneurs, and service providers in a secure, transparent ecosystem designed for growth.',
+    'landing.cta': 'Get Started',
+    'landing.features.secure.title': 'Secure & Trusted',
+    'landing.features.secure.description': 'Bank-level security with multi-layer verification and escrow protection for all transactions.',
+    'landing.features.transparent.title': 'Transparent Analytics',
+    'landing.features.transparent.description': 'Real-time insights, progress tracking, and comprehensive reporting for informed decision-making.',
+    'landing.features.community.title': 'Community Driven',
+    'landing.features.community.description': 'Built on Ubuntu principles - we grow together through collaboration and mutual support.',
+    
+    // Roles
+    'role.investor': 'Investors',
+    'role.entrepreneur': 'Entrepreneurs',
+    'role.serviceProvider': 'Service Providers',
+    
+    // Actions
+    'action.signUp': 'Sign Up',
+    'action.signIn': 'Sign In',
+    'action.getStarted': 'Get Started',
     
     // Auth
-    'auth.email': 'Email Address',
+    'auth.email': 'Email',
     'auth.password': 'Password',
     'auth.confirmPassword': 'Confirm Password',
     'auth.firstName': 'First Name',
     'auth.lastName': 'Last Name',
     'auth.phoneNumber': 'Phone Number',
-    'auth.organization': 'Organization Name (Optional)',
-    'auth.role': 'Role',
+    'auth.selectRole': 'Select Role',
     'auth.forgotPassword': 'Forgot Password?',
+    'auth.alreadyHaveAccount': 'Already have an account?',
+    'auth.dontHaveAccount': "Don't have an account?",
+    'auth.createAccount': 'Create Account',
+    'auth.welcomeBack': 'Welcome back! Please sign in to your account.',
+    'auth.createYourAccount': 'Create your account to get started.',
     
-    // Roles
-    'role.investor': 'Investor',
-    'role.entrepreneur': 'Entrepreneur',
-    'role.serviceProvider': 'Service Provider',
-    'role.observer': 'Observer',
-    'role.admin': 'Administrator',
-    
-    // Dashboard
-    'dashboard.welcome': 'Welcome back',
-    'dashboard.overview': 'Overview',
-    'dashboard.recentActivity': 'Recent Activity',
-    'dashboard.quickActions': 'Quick Actions',
+    // Common
+    'common.loading': 'Loading...',
+    'common.error': 'Error',
+    'common.success': 'Success',
   },
   nd: {
-    // Navigation
-    'nav.dashboard': 'I-Dashboard',
-    'nav.opportunities': 'Amathuba',
-    'nav.investments': 'Utyalo-mali Lwami',
-    'nav.pools': 'Amaqela Otyalo-mali',
-    'nav.serviceProviders': 'Ababoneleli Benkonzo',
-    'nav.reports': 'Imibiko',
-    'nav.profile': 'Iprofayile',
-    'nav.settings': 'Izilungiselelo',
-    'nav.users': 'Ukuphathwa Kwabasebenzisi',
-    
-    // Common actions
-    'action.signIn': 'Ngena',
-    'action.signUp': 'Zibhalise',
-    'action.create': 'Dala',
-    'action.edit': 'Hlela',
-    'action.delete': 'Susa',
-    'action.save': 'Gcina',
-    'action.cancel': 'Yeka',
-    'action.submit': 'Thumela',
-    'action.viewDetails': 'Bona Imininingwane',
-    
     // Landing page
-    'landing.title': 'Abathwa Investment Hub',
-    'landing.subtitle': 'Ukudibanisa abatyali-mali, oosomashishini, noluntu ngokusebenzisa izithethe zemveli nobuchwepheshe banamhlanje.',
-    'landing.cta': 'Zijoyine Uluntu Lwethu',
-    'landing.features.secure.title': 'Ukhuseleko Lwe-Ubuntu',
-    'landing.features.secure.description': 'Utyalo-mali lwakho lukhuselelwe ngokhuseleko oluqhutywa luluntu kunye nemithetho yothemba lwemveli.',
-    'landing.features.transparent.title': 'Ukubonakala Okupheleleyo',
-    'landing.features.transparent.description': 'Landela lonke utyalo-mali ngokubona okupheleleyo, sihlonipha isibophelelo sethu sokuvula.',
-    'landing.features.community.title': 'Uluntu Olomeleleyo',
-    'landing.features.community.description': 'Zijoyine kwiqonga abakha ubutyebi kunye ngokusebenzisa imigaqo ye-Ubuntu.',
-    
-    // Auth
-    'auth.email': 'Idilesi Ye-imeyili',
-    'auth.password': 'Iphaswedi',
-    'auth.confirmPassword': 'Qinisekisa Iphaswedi',
-    'auth.firstName': 'Igama Lokuqala',
-    'auth.lastName': 'Ifani',
-    'auth.phoneNumber': 'Inombolo Yefoni',
-    'auth.organization': 'Igama Lenhlanganiso (Akusiyo Impoqo)',
-    'auth.role': 'Indima',
-    'auth.forgotPassword': 'Ukhohlwe Iphaswedi?',
+    'landing.title': 'Abathwa Hub',
+    'landing.subtitle': 'Sihlanganisa abatshalizimali, oosomabhizinisi, kanye nabahlinzeki bezidingo endaweni ephephile, ecacile eyenzelwe ukukhula.',
+    'landing.cta': 'Qalisa',
+    'landing.features.secure.title': 'Okuphephile Nokuthenjiweyo',
+    'landing.features.secure.description': 'Ukuphepha kwebhange ngokuqinisekiswa okungamanani amaningi kanye nokuvikelwa kwe-escrow kuwo wonke umsebenzi.',
+    'landing.features.transparent.title': 'Ukuhlaziya Okucacileyo',
+    'landing.features.transparent.description': 'Ukubona okwesikhathi esiqondile, ukulandelela inqubekela phambili, kanye nembiko epheleleyo yokwenza izinqumo ezinolwazi.',
+    'landing.features.community.title': 'Okuqhutshwa Umphakathi',
+    'landing.features.community.description': 'Yakhelwe phezu kwemigomo ye-Ubuntu - sikhula ndawonye ngokubambisana nokusekelana.',
     
     // Roles
-    'role.investor': 'Umtyali-mali',
-    'role.entrepreneur': 'Usomashishini',
-    'role.serviceProvider': 'Umoneleli Wenkonzo',
-    'role.observer': 'Umbuki',
-    'role.admin': 'Umlawuli',
+    'role.investor': 'Abatshalizimali',
+    'role.entrepreneur': 'Oosomabhizinisi',
+    'role.serviceProvider': 'Abahlinzeki Bezidingo',
     
-    // Dashboard
-    'dashboard.welcome': 'Siyakwamukela futhi',
-    'dashboard.overview': 'Isifinyezo',
-    'dashboard.recentActivity': 'Imisebenzi Yakamuva',
-    'dashboard.quickActions': 'Izenzo Ezikhawuleza',
+    // Actions
+    'action.signUp': 'Bhalisa',
+    'action.signIn': 'Ngena',
+    'action.getStarted': 'Qalisa',
+    
+    // Auth
+    'auth.email': 'I-email',
+    'auth.password': 'Iphasiwedi',
+    'auth.confirmPassword': 'Qinisekisa Iphasiwedi',
+    'auth.firstName': 'Igama Lokuqala',
+    'auth.lastName': 'Isibongo',
+    'auth.phoneNumber': 'Inombolo Yocingo',
+    'auth.selectRole': 'Khetha Indima',
+    'auth.forgotPassword': 'Ukhohlwe Iphasiwedi?',
+    'auth.alreadyHaveAccount': 'Usunale-akhawunti?',
+    'auth.dontHaveAccount': 'Awunale-akhawunti?',
+    'auth.createAccount': 'Dala I-akhawunti',
+    'auth.welcomeBack': 'Siyakwamukela! Sicela ufake imininingwane yakho.',
+    'auth.createYourAccount': 'Dala i-akhawunti yakho ukuze uqalise.',
+    
+    // Common
+    'common.loading': 'Kulayishwa...',
+    'common.error': 'Iphutha',
+    'common.success': 'Impumelelo',
   }
 };
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'nd')) {
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang);
-    localStorage.setItem('language', lang);
-  };
-
-  const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations[typeof language]] || key;
-  };
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-};
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
@@ -163,4 +104,22 @@ export const useLanguage = () => {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
+};
+
+interface LanguageProviderProps {
+  children: ReactNode;
+}
+
+export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
+  const [language, setLanguage] = useState<Language>('en');
+
+  const t = (key: string): string => {
+    return translations[language][key as keyof typeof translations['en']] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
 };

@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,7 +20,6 @@ const SignUp = () => {
     firstName: '',
     lastName: '',
     phoneNumber: '',
-    organization: '',
     role: ''
   });
 
@@ -61,7 +60,7 @@ const SignUp = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">{t('action.signUp')}</CardTitle>
             <CardDescription>
-              Create your account to join our investment community
+              {t('auth.createYourAccount')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -112,24 +111,14 @@ const SignUp = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="organization">{t('auth.organization')}</Label>
-                <Input
-                  id="organization"
-                  type="text"
-                  value={formData.organization}
-                  onChange={(e) => handleInputChange('organization', e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="role">{t('auth.role')}</Label>
+                <Label htmlFor="role">{t('auth.selectRole')}</Label>
                 <Select onValueChange={(value) => handleInputChange('role', value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
+                    <SelectValue placeholder={t('auth.selectRole')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="entrepreneur">{t('role.entrepreneur')}</SelectItem>
                     <SelectItem value="investor">{t('role.investor')}</SelectItem>
+                    <SelectItem value="entrepreneur">{t('role.entrepreneur')}</SelectItem>
                     <SelectItem value="service_provider">{t('role.serviceProvider')}</SelectItem>
                   </SelectContent>
                 </Select>
@@ -158,13 +147,13 @@ const SignUp = () => {
               </div>
               
               <Button type="submit" className="w-full">
-                {t('action.signUp')}
+                {t('auth.createAccount')}
               </Button>
             </form>
             
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Already have an account?{' '}
+                {t('auth.alreadyHaveAccount')}{' '}
                 <Link to="/login" className="text-primary hover:underline">
                   {t('action.signIn')}
                 </Link>
