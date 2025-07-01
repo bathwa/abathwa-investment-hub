@@ -9,17 +9,20 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { Building, Loader2 } from 'lucide-react';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { Building, Loader2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Login = () => {
   const { t } = useLanguage();
   const { signIn, user, loading } = useAuth();
+  const { handleError } = useErrorHandler();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -28,19 +31,30 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.email.trim() || !formData.password.trim()) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const { error } = await signIn(formData.email, formData.password);
       
       if (error) {
-        toast.error(error.message || 'Login failed. Please check your credentials.');
+        handleError(error.message || 'Login failed. Please check your credentials.');
       } else {
         toast.success('Login successful!');
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('An unexpected error occurred. Please try again.');
+      handleError('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -91,19 +105,31 @@ const Login = () => {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   required
                   disabled={isSubmitting}
+                  placeholder="Enter your email"
                 />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="password">{t('auth.password')}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    disabled={isSubmitting}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
               
               <div className="flex items-center justify-between">

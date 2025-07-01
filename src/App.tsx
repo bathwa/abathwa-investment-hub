@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +37,7 @@ const queryClient = new QueryClient({
       },
       staleTime: 5 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
     },
     mutations: {
       retry: (failureCount, error: any) => {
@@ -54,9 +56,9 @@ const App = () => (
       <LanguageProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <AuthProvider>
-              <NotificationProvider>
-                <BrowserRouter>
+            <BrowserRouter>
+              <AuthProvider>
+                <NotificationProvider>
                   <Toaster />
                   <Sonner 
                     position="top-right"
@@ -70,6 +72,7 @@ const App = () => (
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     
                     {/* Protected dashboard routes */}
                     <Route 
@@ -155,9 +158,9 @@ const App = () => (
                     
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </BrowserRouter>
-              </NotificationProvider>
-            </AuthProvider>
+                </NotificationProvider>
+              </AuthProvider>
+            </BrowserRouter>
           </TooltipProvider>
         </QueryClientProvider>
       </LanguageProvider>

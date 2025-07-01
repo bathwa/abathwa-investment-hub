@@ -69,10 +69,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Refresh user data
   const refreshUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const userProfile = await fetchUserProfile(authUser.id);
-      setUser(userProfile);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const userProfile = await fetchUserProfile(authUser.id);
+        setUser(userProfile);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
     }
   };
 
@@ -101,11 +105,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Auth state changed:', event, session?.user?.email);
 
         if (event === 'SIGNED_IN' && session?.user) {
-          const userProfile = await fetchUserProfile(session.user.id);
-          if (userProfile && isMounted) {
-            setUser(userProfile);
-            handlePostLoginRedirect(userProfile);
-            toast.success(`Welcome back, ${userProfile.full_name}!`);
+          try {
+            const userProfile = await fetchUserProfile(session.user.id);
+            if (userProfile && isMounted) {
+              setUser(userProfile);
+              handlePostLoginRedirect(userProfile);
+              toast.success(`Welcome back, ${userProfile.full_name || userProfile.email}!`);
+            }
+          } catch (error) {
+            console.error('Error handling sign in:', error);
+            toast.error('Error loading user profile');
           }
         } else if (event === 'SIGNED_OUT') {
           if (isMounted) {
@@ -115,9 +124,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Refresh user profile when token is refreshed
-          const userProfile = await fetchUserProfile(session.user.id);
-          if (userProfile && isMounted) {
-            setUser(userProfile);
+          try {
+            const userProfile = await fetchUserProfile(session.user.id);
+            if (userProfile && isMounted) {
+              setUser(userProfile);
+            }
+          } catch (error) {
+            console.error('Error refreshing user profile:', error);
           }
         }
 
@@ -153,7 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location]);
 
   const signIn = async (email: string, password: string) => {
     try {
