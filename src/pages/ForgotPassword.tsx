@@ -8,16 +8,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Building } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Building, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ForgotPassword = () => {
   const { t } = useLanguage();
   const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement forgot password logic
-    console.log('Forgot password for:', email);
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        toast.error(error.message || 'Failed to send reset email');
+      } else {
+        toast.success('Reset email sent! Please check your inbox.');
+        setIsSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -47,26 +68,56 @@ const ForgotPassword = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
             <CardDescription>
-              Enter your email address and we'll send you a link to reset your password.
+              {isSubmitted 
+                ? "We've sent you a password reset link. Please check your email."
+                : "Enter your email address and we'll send you a link to reset your password."
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">{t('auth.email')}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+            {!isSubmitted ? (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t('auth.email')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                    placeholder="Enter your email address"
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </Button>
+              </form>
+            ) : (
+              <div className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Didn't receive the email? Check your spam folder or try again.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsSubmitted(false);
+                    setEmail('');
+                  }}
+                  className="w-full"
+                >
+                  Try Again
+                </Button>
               </div>
-              
-              <Button type="submit" className="w-full">
-                Send Reset Link
-              </Button>
-            </form>
+            )}
             
             <div className="mt-4 text-center space-y-2">
               <p className="text-sm text-muted-foreground">

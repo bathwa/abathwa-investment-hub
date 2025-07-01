@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '../hooks/useAuth';
-import { useToast } from '../hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { UserRole } from '../shared/types';
 
 interface AuthModalProps {
@@ -18,7 +20,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -60,24 +61,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       const { error } = await signIn(loginEmail, loginPassword);
       
       if (error) {
-        toast({
-          title: "Login Failed",
-          description: error.message || "Please check your credentials and try again.",
-          variant: "destructive",
-        });
+        toast.error(error.message || "Please check your credentials and try again.");
       } else {
-        toast({
-          title: "Login Successful",
-          description: "Welcome back!",
-        });
+        toast.success("Welcome back!");
         onClose();
       }
     } catch (error) {
-      toast({
-        title: "Login Failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -90,22 +80,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     try {
       // Validate required fields
       if (!firstName.trim() || !lastName.trim()) {
-        toast({
-          title: "Registration Failed",
-          description: "First name and last name are required.",
-          variant: "destructive",
-        });
+        toast.error("First name and last name are required.");
         setIsLoading(false);
         return;
       }
 
       // Validate admin key if admin email
       if (isAdminEmail && adminKey !== 'vvv.ndev') {
-        toast({
-          title: "Registration Failed",
-          description: "Invalid admin key. Please enter the correct admin key.",
-          variant: "destructive",
-        });
+        toast.error("Invalid admin key. Please enter the correct admin key.");
         setIsLoading(false);
         return;
       }
@@ -120,16 +102,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       const { error } = await signUp(registerEmail, registerPassword, registerRole, profileData);
       
       if (error) {
-        toast({
-          title: "Registration Failed",
-          description: error.message || "Please check your information and try again.",
-          variant: "destructive",
-        });
+        toast.error(error.message || "Please check your information and try again.");
       } else {
-        toast({
-          title: "Registration Successful",
-          description: "Please check your email to verify your account.",
-        });
+        toast.success("Registration successful! Please check your email to verify your account.");
         setActiveTab('login');
         // Clear form
         setRegisterEmail('');
@@ -141,11 +116,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         setAdminKey('');
       }
     } catch (error) {
-      toast({
-        title: "Registration Failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -180,6 +151,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -191,10 +163,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign In"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
             </TabsContent>
@@ -210,6 +190,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     value={registerEmail}
                     onChange={(e) => setRegisterEmail(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -223,6 +204,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
+                      disabled={isLoading}
                     />
                   </div>
                   <div className="space-y-2">
@@ -234,6 +216,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -246,6 +229,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     placeholder="Phone number"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -258,6 +242,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -265,7 +250,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 {!isAdminEmail && (
                   <div className="space-y-2">
                     <Label htmlFor="register-role">Role</Label>
-                    <Select value={registerRole} onValueChange={(value: UserRole) => setRegisterRole(value)}>
+                    <Select value={registerRole} onValueChange={(value: UserRole) => setRegisterRole(value)} disabled={isLoading}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
@@ -286,26 +271,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <Input
                       id="admin-key"
                       type="password"
-                      placeholder="Enter admin key: 'vvv.ndev'"
+                      placeholder="Enter admin key"
                       value={adminKey}
                       onChange={(e) => setAdminKey(e.target.value)}
                       required
+                      disabled={isLoading}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter the admin key in quotes: 'vvv.ndev'
+                      Admin key required for administrator registration
                     </p>
                   </div>
                 )}
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create Account"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
           
           <div className="mt-4 text-center">
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="ghost" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
           </div>

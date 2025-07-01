@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user was trying to access a specific page before login
     const from = location.state?.from?.pathname;
     
-    if (from && from !== '/' && from !== dashboardRoute) {
+    if (from && from !== '/' && from !== '/login' && from !== '/signup' && from !== dashboardRoute) {
       navigate(from, { replace: true });
     } else {
       navigate(dashboardRoute, { replace: true });

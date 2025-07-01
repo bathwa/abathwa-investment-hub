@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 import type { UserRole } from '../shared/types';
 
 interface ProtectedRouteProps {
@@ -12,7 +14,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   allowedRoles = [],
-  redirectTo = '/'
+  redirectTo = '/login'
 }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -20,15 +22,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Show loading spinner while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-orange-900/20 dark:to-amber-900/20">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
 
   // If not authenticated, redirect to login
   if (!user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
   // If roles are specified and user doesn't have required role, redirect
@@ -50,4 +55,4 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   return <>{children}</>;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;
