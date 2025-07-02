@@ -1,89 +1,19 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   FileText, 
   Briefcase, 
   ClipboardList, 
-  Plus, 
-  Users, 
-  TrendingUp,
-  DollarSign 
+  Construction,
+  Database 
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { CreateServiceRequestModal } from './CreateServiceRequestModal';
-import { ServiceRequestsList } from './ServiceRequestsList';
-import { IncomingRequestsList } from './IncomingRequestsList';
-import { WorkOrdersList } from './WorkOrdersList';
-import { JobCardsList } from './JobCardsList';
 
 export const ServiceManagementDashboard: React.FC = () => {
   const { user } = useAuth();
   
-  // Determine user capabilities based on role
-  const canRequestServices = user?.role === 'entrepreneur' || user?.role === 'investor';
-  const canProvideServices = user?.role === 'service_provider';
-  const isAdmin = user?.role === 'super_admin';
-
-  // Quick stats cards (placeholder - would be connected to real data)
-  const QuickStats: React.FC = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Active Requests</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">3</div>
-          <p className="text-xs text-muted-foreground">
-            +1 from last month
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Work Orders</CardTitle>
-          <Briefcase className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">5</div>
-          <p className="text-xs text-muted-foreground">
-            2 completed this month
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Job Cards</CardTitle>
-          <ClipboardList className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">12</div>
-          <p className="text-xs text-muted-foreground">
-            8 in progress
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">$12,450</div>
-          <p className="text-xs text-muted-foreground">
-            +20% from last month
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -94,77 +24,111 @@ export const ServiceManagementDashboard: React.FC = () => {
             Manage service requests, work orders, and job cards
           </p>
         </div>
-        
-        {canRequestServices && (
-          <CreateServiceRequestModal
-            trigger={
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Request Service
-              </Button>
-            }
-          />
-        )}
       </div>
 
-      <QuickStats />
+      {/* Construction Notice */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-orange-800">
+            <Construction className="h-5 w-5" />
+            Service Management Under Development
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-orange-700">
+          <p className="mb-4">
+            The Service Management module is currently being developed. This comprehensive system will include:
+          </p>
+          <ul className="space-y-2 list-disc list-inside mb-4">
+            <li><strong>Service Requests:</strong> Create and manage service requests for legal, accounting, due diligence, and other professional services</li>
+            <li><strong>Work Orders:</strong> Structured agreements between requestors and service providers</li>
+            <li><strong>Job Cards:</strong> Granular task management within work orders</li>
+            <li><strong>Provider Matching:</strong> AI-powered matching of service requests to qualified providers</li>
+            <li><strong>Template System:</strong> Standardized templates for different service categories</li>
+          </ul>
+          <div className="flex items-center gap-2 text-sm">
+            <Database className="h-4 w-4" />
+            <span>Database schema deployment required for full functionality</span>
+          </div>
+        </CardContent>
+      </Card>
 
-      <Tabs defaultValue={canRequestServices ? "requests" : "incoming"} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          {canRequestServices && (
-            <TabsTrigger value="requests" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              My Requests
-            </TabsTrigger>
-          )}
-          
-          {canProvideServices && (
-            <TabsTrigger value="incoming" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Incoming
-            </TabsTrigger>
-          )}
-          
-          <TabsTrigger value="work-orders" className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4" />
-            Work Orders
-          </TabsTrigger>
-          
-          <TabsTrigger value="job-cards" className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4" />
-            Job Cards
-          </TabsTrigger>
-        </TabsList>
+      {/* Placeholder Feature Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-dashed">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Service Requests</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-muted-foreground">Coming Soon</div>
+            <p className="text-xs text-muted-foreground">
+              Create and manage service requests
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-dashed">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Work Orders</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-muted-foreground">Coming Soon</div>
+            <p className="text-xs text-muted-foreground">
+              Structured service agreements
+            </p>
+          </CardContent>
+        </Card>
 
-        {canRequestServices && (
-          <TabsContent value="requests" className="space-y-4">
-            <ServiceRequestsList 
-              title="My Service Requests"
-              showActions={true}
-            />
-          </TabsContent>
-        )}
+        <Card className="border-dashed">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Job Cards</CardTitle>
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-muted-foreground">Coming Soon</div>
+            <p className="text-xs text-muted-foreground">
+              Granular task management
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-        {canProvideServices && (
-          <TabsContent value="incoming" className="space-y-4">
-            <IncomingRequestsList />
-          </TabsContent>
-        )}
-
-        <TabsContent value="work-orders" className="space-y-4">
-          <WorkOrdersList 
-            isProvider={canProvideServices}
-            title="Work Orders"
-          />
-        </TabsContent>
-
-        <TabsContent value="job-cards" className="space-y-4">
-          <JobCardsList 
-            title="Job Cards"
-            showActions={canProvideServices}
-          />
-        </TabsContent>
-      </Tabs>
+      {/* Role-based Information */}
+      {user && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Role: {user.role.replace('_', ' ').toUpperCase()}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Based on your role, you will have access to the following features when the Service Management module is deployed:
+            </p>
+            {user.role === 'entrepreneur' || user.role === 'investor' ? (
+              <ul className="space-y-1 text-sm list-disc list-inside">
+                <li>Request professional services for your opportunities</li>
+                <li>Browse and select qualified service providers</li>
+                <li>Monitor work progress through job cards</li>
+                <li>Manage payments and service completion</li>
+              </ul>
+            ) : user.role === 'service_provider' ? (
+              <ul className="space-y-1 text-sm list-disc list-inside">
+                <li>Receive and accept service requests</li>
+                <li>Create and manage work orders</li>
+                <li>Break down work into detailed job cards</li>
+                <li>Track progress and communicate with clients</li>
+              </ul>
+            ) : (
+              <ul className="space-y-1 text-sm list-disc list-inside">
+                <li>Oversee all service management activities</li>
+                <li>Configure service categories and templates</li>
+                <li>Monitor system performance and usage</li>
+                <li>Manage service provider qualifications</li>
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

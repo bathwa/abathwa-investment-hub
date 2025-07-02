@@ -37,11 +37,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Get dashboard route based on user role
   const getDashboardRoute = (role: UserRole): string => {
     const roleDashboardMap: Record<UserRole, string> = {
-      'super_admin': '/admin-dashboard',
-      'investor': '/investor-dashboard',
-      'entrepreneur': '/entrepreneur-dashboard',
-      'service_provider': '/service-provider-dashboard',
-      'observer': '/observer-dashboard'
+      'super_admin': '/admin',
+      'investor': '/investor',
+      'entrepreneur': '/entrepreneur',
+      'service_provider': '/service-provider',
+      'observer': '/observer'
     };
     return roleDashboardMap[role];
   };
