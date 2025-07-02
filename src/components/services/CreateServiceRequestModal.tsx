@@ -19,19 +19,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, DollarSign, FileText, Plus, X } from 'lucide-react';
+import { FileText, Plus, X } from 'lucide-react';
 import { useServices } from '@/hooks/useServices';
 import { LoadingWrapper } from '@/components/LoadingWrapper';
-import type { CreateServiceRequestData } from '@/types/services';
 
 interface CreateServiceRequestModalProps {
   trigger: React.ReactNode;
   associatedEntityId?: string;
   associatedEntityType?: 'opportunity' | 'investment';
   onSuccess?: () => void;
+}
+
+interface CreateServiceRequestData {
+  title: string;
+  description: string;
+  service_category_id: string;
+  proposed_budget?: number;
+  currency: string;
+  end_date?: string;
+  deliverables: string[];
 }
 
 export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps> = ({
@@ -50,10 +58,7 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
 
   const form = useForm<CreateServiceRequestData>({
     defaultValues: {
-      associated_entity_id: associatedEntityId,
-      associated_entity_type: associatedEntityType,
       currency: 'USD',
-      broadcast_to_all: false,
       deliverables: [],
     },
   });
@@ -71,26 +76,20 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
     setDeliverables(deliverables.filter((_, i) => i !== index));
   };
 
-  const handleAddDefaultDeliverable = (deliverable: string) => {
-    if (!deliverables.includes(deliverable)) {
-      setDeliverables([...deliverables, deliverable]);
-    }
-  };
-
   const onSubmit = async (data: CreateServiceRequestData) => {
     try {
       await createServiceRequest.mutateAsync({
         ...data,
         deliverables,
         service_category_id: selectedCategory,
+        scope_description: data.description,
       });
       
       setOpen(false);
       form.reset();
       setDeliverables([]);
       setSelectedCategory('');
-      onSuccess?.(
-      );
+      onSuccess?.();
     } catch (error) {
       console.error('Error creating service request:', error);
     }
@@ -147,19 +146,19 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
               )}
             </div>
 
-            {/* Scope Description */}
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="scope">Detailed Scope Description *</Label>
+              <Label htmlFor="description">Detailed Description *</Label>
               <Textarea
-                {...form.register('scope_description', { 
-                  required: 'Scope description is required' 
+                {...form.register('description', { 
+                  required: 'Description is required' 
                 })}
                 placeholder="Provide a comprehensive description of the work you need done..."
                 className="min-h-[100px]"
               />
-              {form.formState.errors.scope_description && (
+              {form.formState.errors.description && (
                 <p className="text-sm text-destructive">
-                  {form.formState.errors.scope_description.message}
+                  {form.formState.errors.description.message}
                 </p>
               )}
             </div>
@@ -168,33 +167,6 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
             <div className="space-y-4">
               <Label>Expected Deliverables</Label>
               
-              {/* Default deliverables from category */}
-              {selectedCategoryData?.default_deliverables.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">
-                      Suggested Deliverables for {selectedCategoryData.name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {selectedCategoryData.default_deliverables.map((deliverable, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm">{deliverable}</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddDefaultDeliverable(deliverable)}
-                          disabled={deliverables.includes(deliverable)}
-                        >
-                          {deliverables.includes(deliverable) ? 'Added' : 'Add'}
-                        </Button>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Custom deliverable input */}
               <div className="flex gap-2">
                 <Input
@@ -234,22 +206,13 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
               )}
             </div>
 
-            {/* Timeline */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_date">Start Date</Label>
-                <Input
-                  type="date"
-                  {...form.register('start_date')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end_date">End Date</Label>
-                <Input
-                  type="date"
-                  {...form.register('end_date')}
-                />
-              </div>
+            {/* Deadline */}
+            <div className="space-y-2">
+              <Label htmlFor="end_date">Deadline</Label>
+              <Input
+                type="date"
+                {...form.register('end_date')}
+              />
             </div>
 
             {/* Budget */}
@@ -272,23 +235,6 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
                   placeholder="Enter proposed budget"
                 />
               </div>
-              {selectedCategoryData?.expected_budget_range && (
-                <p className="text-sm text-muted-foreground">
-                  Typical range: ${selectedCategoryData.expected_budget_range.min} - 
-                  ${selectedCategoryData.expected_budget_range.max}
-                </p>
-              )}
-            </div>
-
-            {/* Broadcast option */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="broadcast"
-                {...form.register('broadcast_to_all')}
-              />
-              <Label htmlFor="broadcast" className="text-sm">
-                Broadcast to all relevant service providers
-              </Label>
             </div>
 
             {/* Actions */}
