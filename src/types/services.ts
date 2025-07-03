@@ -1,3 +1,4 @@
+
 // Service Management Types matching the actual database schema
 
 export interface ServiceCategory {
@@ -49,6 +50,16 @@ export interface WorkOrder {
   updated_at: string;
 }
 
+export interface ProgressNote {
+  note: string;
+  timestamp: string;
+}
+
+export interface JobCardAttachment {
+  name: string;
+  url: string;
+}
+
 export interface JobCard {
   id: string;
   work_order_id: string;
@@ -56,14 +67,8 @@ export interface JobCard {
   description?: string;
   due_date?: string;
   status: JobCardStatus;
-  progress_notes: Array<{
-    note: string;
-    timestamp: string;
-  }>;
-  attachments: Array<{
-    name: string;
-    url: string;
-  }>;
+  progress_notes: ProgressNote[];
+  attachments: JobCardAttachment[];
   created_at: string;
   updated_at: string;
 }
