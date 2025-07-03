@@ -4,49 +4,34 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from './useErrorHandler';
 import { toast } from 'sonner';
-
-// Use the actual database types
-type ServiceCategory = {
-  id: string;
-  name: string;
-  description: string;
-};
-
-type ServiceRequest = {
-  id: string;
-  title: string;
-  description: string;
-  service_type: string;
-  status: string;
-  created_at: string;
-  requester_id: string;
-  provider_id?: string;
-  opportunity_id?: string;
-  budget_range?: any;
-  deadline?: string;
-};
+import type { ServiceCategory, ServiceRequest, WorkOrder, JobCard, ServiceNegotiation } from '@/types/services';
 
 export const useServices = () => {
   const { handleError } = useErrorHandler();
   const queryClient = useQueryClient();
 
-  // Simplified hook that works with existing database
+  // Service Categories
   const useServiceCategories = () => {
     return useQuery({
       queryKey: ['service-categories'],
       queryFn: async (): Promise<ServiceCategory[]> => {
-        console.log('Service categories not yet available - placeholder data');
-        // Return placeholder data until database schema is available
-        return [
-          { id: '1', name: 'Legal', description: 'Legal advisory services' },
-          { id: '2', name: 'Accounting', description: 'Financial and accounting services' },
-          { id: '3', name: 'Due Diligence', description: 'Investment due diligence' },
-        ];
+        try {
+          const { data, error } = await supabase
+            .from('service_categories')
+            .select('*')
+            .order('name');
+
+          if (error) throw error;
+          return data || [];
+        } catch (error) {
+          console.error('Error fetching service categories:', error);
+          return [];
+        }
       },
     });
   };
 
-  // Use existing service_requests table structure
+  // Service Requests
   const useServiceRequests = () => {
     return useQuery({
       queryKey: ['service-requests'],
@@ -88,39 +73,88 @@ export const useServices = () => {
     });
   };
 
+  // Work Orders
   const useWorkOrders = () => {
     return useQuery({
       queryKey: ['work-orders'],
-      queryFn: async (): Promise<any[]> => {
-        console.log('Work orders not yet available - placeholder data');
-        return [];
+      queryFn: async (): Promise<WorkOrder[]> => {
+        try {
+          const { data, error } = await supabase
+            .from('work_orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          return data || [];
+        } catch (error) {
+          console.error('Error fetching work orders:', error);
+          return [];
+        }
       },
     });
   };
 
-  const useJobCards = () => {
+  // Job Cards
+  const useJobCards = (workOrderId?: string) => {
     return useQuery({
-      queryKey: ['job-cards'],
-      queryFn: async (): Promise<any[]> => {
-        console.log('Job cards not yet available - placeholder data');
-        return [];
+      queryKey: ['job-cards', workOrderId],
+      queryFn: async (): Promise<JobCard[]> => {
+        try {
+          let query = supabase
+            .from('job_cards')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (workOrderId) {
+            query = query.eq('work_order_id', workOrderId);
+          }
+
+          const { data, error } = await query;
+
+          if (error) throw error;
+          return data || [];
+        } catch (error) {
+          console.error('Error fetching job cards:', error);
+          return [];
+        }
       },
     });
   };
 
-  // Simplified mutations using existing schema
+  // Service Negotiations
+  const useServiceNegotiations = () => {
+    return useQuery({
+      queryKey: ['service-negotiations'],
+      queryFn: async (): Promise<ServiceNegotiation[]> => {
+        try {
+          const { data, error } = await supabase
+            .from('service_negotiations')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          return data || [];
+        } catch (error) {
+          console.error('Error fetching service negotiations:', error);
+          return [];
+        }
+      },
+    });
+  };
+
+  // Mutations
   const createServiceRequest = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Partial<ServiceRequest>) => {
       try {
         const { data: result, error } = await supabase
           .from('service_requests')
           .insert({
             title: data.title,
-            description: data.description || data.scope_description,
-            service_type: data.service_category_id || 'general',
+            description: data.description,
+            service_type: data.service_type,
             requester_id: (await supabase.auth.getUser()).data.user?.id,
-            budget_range: data.proposed_budget ? { min: 0, max: data.proposed_budget } : null,
-            deadline: data.end_date,
+            budget_range: data.budget_range,
+            deadline: data.deadline,
             status: 'open'
           })
           .select()
@@ -140,12 +174,12 @@ export const useServices = () => {
   });
 
   const acceptServiceRequest = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: { requestId: string }) => {
       try {
         const { data: result, error } = await supabase
           .from('service_requests')
           .update({
-            status: 'accepted',
+            status: 'assigned',
             provider_id: (await supabase.auth.getUser()).data.user?.id,
           })
           .eq('id', data.requestId)
@@ -166,30 +200,93 @@ export const useServices = () => {
     },
   });
 
-  const createJobCard = useMutation({
-    mutationFn: async (data: any) => {
-      console.log('Create job card placeholder:', data);
-      toast.info('Job card creation will be available once database schema is deployed');
-      throw new Error('Job card creation not yet available');
+  const createWorkOrder = useMutation({
+    mutationFn: async (data: Partial<WorkOrder>) => {
+      try {
+        const { data: result, error } = await supabase
+          .from('work_orders')
+          .insert({
+            service_request_id: data.service_request_id,
+            service_provider_id: (await supabase.auth.getUser()).data.user?.id,
+            agreed_scope: data.agreed_scope,
+            agreed_deliverables: data.agreed_deliverables,
+            agreed_start_date: data.agreed_start_date,
+            agreed_end_date: data.agreed_end_date,
+            agreed_fee: data.agreed_fee,
+            currency: data.currency || 'USD',
+            status: 'in_progress'
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        toast.success('Work order created successfully');
+        queryClient.invalidateQueries({ queryKey: ['work-orders'] });
+        return result;
+      } catch (error) {
+        console.error('Error creating work order:', error);
+        toast.error('Failed to create work order');
+        throw error;
+      }
     },
-    onError: (error) => {
-      console.log('Job card creation pending database deployment');
+  });
+
+  const createJobCard = useMutation({
+    mutationFn: async (data: Partial<JobCard>) => {
+      try {
+        const { data: result, error } = await supabase
+          .from('job_cards')
+          .insert({
+            work_order_id: data.work_order_id,
+            title: data.title,
+            description: data.description,
+            due_date: data.due_date,
+            status: 'not_started',
+            progress_notes: [],
+            attachments: []
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        toast.success('Job card created successfully');
+        queryClient.invalidateQueries({ queryKey: ['job-cards'] });
+        return result;
+      } catch (error) {
+        console.error('Error creating job card:', error);
+        toast.error('Failed to create job card');
+        throw error;
+      }
     },
   });
 
   const updateJobCard = useMutation({
-    mutationFn: async (data: any) => {
-      console.log('Update job card placeholder:', data);
-      toast.info('Job card update will be available once database schema is deployed');
-      throw new Error('Job card update not yet available');
-    },
-    onError: (error) => {
-      console.log('Job card update pending database deployment');
+    mutationFn: async (data: { id: string; updates: Partial<JobCard> }) => {
+      try {
+        const { data: result, error } = await supabase
+          .from('job_cards')
+          .update(data.updates)
+          .eq('id', data.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        toast.success('Job card updated successfully');
+        queryClient.invalidateQueries({ queryKey: ['job-cards'] });
+        return result;
+      } catch (error) {
+        console.error('Error updating job card:', error);
+        toast.error('Failed to update job card');
+        throw error;
+      }
     },
   });
 
   const updateServiceRequestStatus = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: { id: string; status: string }) => {
       try {
         const { data: result, error } = await supabase
           .from('service_requests')
@@ -219,10 +316,12 @@ export const useServices = () => {
     useIncomingServiceRequests,
     useWorkOrders,
     useJobCards,
+    useServiceNegotiations,
     
     // Mutations
     createServiceRequest,
     acceptServiceRequest,
+    createWorkOrder,
     createJobCard,
     updateJobCard,
     updateServiceRequestStatus,

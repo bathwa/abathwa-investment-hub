@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, FileText, User } from 'lucide-react';
+import { Calendar, FileText, User, DollarSign } from 'lucide-react';
 import { useServices } from '@/hooks/useServices';
 import { LoadingWrapper } from '@/components/LoadingWrapper';
 
@@ -71,7 +71,8 @@ export const ServiceRequestsList: React.FC<ServiceRequestsListProps> = ({
                     </div>
                     {request.budget_range && (
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        Budget Range Available
+                        <DollarSign className="h-4 w-4" />
+                        ${request.budget_range.min} - ${request.budget_range.max}
                       </div>
                     )}
                   </div>

@@ -427,6 +427,53 @@ export type Database = {
           },
         ]
       }
+      job_cards: {
+        Row: {
+          attachments: Json | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          progress_notes: Json | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          work_order_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          progress_notes?: Json | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          work_order_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          progress_notes?: Json | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_cards_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       observers: {
         Row: {
           added_by: string | null
@@ -917,6 +964,102 @@ export type Database = {
           },
         ]
       }
+      service_categories: {
+        Row: {
+          created_at: string | null
+          default_deliverables: Json | null
+          description: string | null
+          expected_budget_range: Json | null
+          id: string
+          mandatory_fields: Json | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_deliverables?: Json | null
+          description?: string | null
+          expected_budget_range?: Json | null
+          id?: string
+          mandatory_fields?: Json | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_deliverables?: Json | null
+          description?: string | null
+          expected_budget_range?: Json | null
+          id?: string
+          mandatory_fields?: Json | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      service_negotiations: {
+        Row: {
+          counter_proposal_notes: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          proposed_deliverables: Json | null
+          proposed_fee: number | null
+          proposed_scope: string | null
+          proposed_timeline_end: string | null
+          proposed_timeline_start: string | null
+          service_provider_id: string
+          service_request_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          counter_proposal_notes?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          proposed_deliverables?: Json | null
+          proposed_fee?: number | null
+          proposed_scope?: string | null
+          proposed_timeline_end?: string | null
+          proposed_timeline_start?: string | null
+          service_provider_id: string
+          service_request_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          counter_proposal_notes?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          proposed_deliverables?: Json | null
+          proposed_fee?: number | null
+          proposed_scope?: string | null
+          proposed_timeline_end?: string | null
+          proposed_timeline_start?: string | null
+          service_provider_id?: string
+          service_request_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_negotiations_service_provider_id_fkey"
+            columns: ["service_provider_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_negotiations_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_providers: {
         Row: {
           availability_status: string | null
@@ -1277,6 +1420,72 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      work_orders: {
+        Row: {
+          agreed_deliverables: Json | null
+          agreed_end_date: string | null
+          agreed_fee: number | null
+          agreed_scope: string
+          agreed_start_date: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          payment_status: string | null
+          service_provider_id: string
+          service_request_id: string
+          status: string | null
+          terms_agreed_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agreed_deliverables?: Json | null
+          agreed_end_date?: string | null
+          agreed_fee?: number | null
+          agreed_scope: string
+          agreed_start_date?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          payment_status?: string | null
+          service_provider_id: string
+          service_request_id: string
+          status?: string | null
+          terms_agreed_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agreed_deliverables?: Json | null
+          agreed_end_date?: string | null
+          agreed_fee?: number | null
+          agreed_scope?: string
+          agreed_start_date?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          payment_status?: string | null
+          service_provider_id?: string
+          service_request_id?: string
+          status?: string | null
+          terms_agreed_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_service_provider_id_fkey"
+            columns: ["service_provider_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: true
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

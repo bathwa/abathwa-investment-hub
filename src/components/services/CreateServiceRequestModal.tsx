@@ -1,95 +1,76 @@
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Plus, X } from 'lucide-react';
+import { format } from 'date-fns';
 import { useServices } from '@/hooks/useServices';
 import { LoadingWrapper } from '@/components/LoadingWrapper';
+import { cn } from '@/lib/utils';
+import type { ServiceCategory } from '@/types/services';
 
 interface CreateServiceRequestModalProps {
-  trigger: React.ReactNode;
-  associatedEntityId?: string;
-  associatedEntityType?: 'opportunity' | 'investment';
-  onSuccess?: () => void;
-}
-
-interface CreateServiceRequestData {
-  title: string;
-  description: string;
-  service_category_id: string;
-  proposed_budget?: number;
-  currency: string;
-  end_date?: string;
-  deliverables: string[];
+  onServiceRequestCreated?: () => void;
 }
 
 export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps> = ({
-  trigger,
-  associatedEntityId,
-  associatedEntityType,
-  onSuccess,
+  onServiceRequestCreated,
 }) => {
   const [open, setOpen] = useState(false);
-  const [deliverables, setDeliverables] = useState<string[]>([]);
-  const [newDeliverable, setNewDeliverable] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-
-  const { useServiceCategories, createServiceRequest } = useServices();
-  const { data: categories, isLoading: categoriesLoading } = useServiceCategories();
-
-  const form = useForm<CreateServiceRequestData>({
-    defaultValues: {
-      currency: 'USD',
-      deliverables: [],
-    },
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    service_type: '',
+    budget_min: '',
+    budget_max: '',
+    deadline: undefined as Date | undefined,
   });
 
-  const selectedCategoryData = categories?.find(cat => cat.id === selectedCategory);
+  const { useServiceCategories, createServiceRequest } = useServices();
+  const { data: categories, isLoading } = useServiceCategories();
 
-  const handleAddDeliverable = () => {
-    if (newDeliverable.trim() && !deliverables.includes(newDeliverable.trim())) {
-      setDeliverables([...deliverables, newDeliverable.trim()]);
-      setNewDeliverable('');
+  const selectedCategory = categories?.find(cat => cat.name === formData.service_type);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title || !formData.description || !formData.service_type) {
+      return;
     }
-  };
 
-  const handleRemoveDeliverable = (index: number) => {
-    setDeliverables(deliverables.filter((_, i) => i !== index));
-  };
-
-  const onSubmit = async (data: CreateServiceRequestData) => {
     try {
+      const budget_range = formData.budget_min && formData.budget_max ? {
+        min: parseFloat(formData.budget_min),
+        max: parseFloat(formData.budget_max),
+      } : undefined;
+
       await createServiceRequest.mutateAsync({
-        ...data,
-        deliverables,
-        service_category_id: selectedCategory,
-        scope_description: data.description,
+        title: formData.title,
+        description: formData.description,
+        service_type: formData.service_type,
+        budget_range,
+        deadline: formData.deadline?.toISOString().split('T')[0],
+      });
+
+      setFormData({
+        title: '',
+        description: '',
+        service_type: '',
+        budget_min: '',
+        budget_max: '',
+        deadline: undefined,
       });
       
       setOpen(false);
-      form.reset();
-      setDeliverables([]);
-      setSelectedCategory('');
-      onSuccess?.();
+      onServiceRequestCreated?.();
     } catch (error) {
       console.error('Error creating service request:', error);
     }
@@ -98,147 +79,152 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger}
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Request Service
+        </Button>
       </DialogTrigger>
+      
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Create Service Request
-          </DialogTitle>
+          <DialogTitle>Request Professional Service</DialogTitle>
         </DialogHeader>
 
-        <LoadingWrapper loading={categoriesLoading}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Service Category Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="category">Service Category *</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a service category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{category.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {category.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Request Title *</Label>
-              <Input
-                {...form.register('title', { required: 'Title is required' })}
-                placeholder="Brief title for your service request"
-              />
-              {form.formState.errors.title && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.title.message}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Detailed Description *</Label>
-              <Textarea
-                {...form.register('description', { 
-                  required: 'Description is required' 
-                })}
-                placeholder="Provide a comprehensive description of the work you need done..."
-                className="min-h-[100px]"
-              />
-              {form.formState.errors.description && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.description.message}
-                </p>
-              )}
-            </div>
-
-            {/* Deliverables */}
+        <LoadingWrapper loading={isLoading}>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Information */}
             <div className="space-y-4">
-              <Label>Expected Deliverables</Label>
-              
-              {/* Custom deliverable input */}
-              <div className="flex gap-2">
+              <div>
+                <Label htmlFor="title">Service Title</Label>
                 <Input
-                  value={newDeliverable}
-                  onChange={(e) => setNewDeliverable(e.target.value)}
-                  placeholder="Add a specific deliverable..."
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddDeliverable())}
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="What service do you need?"
+                  required
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={handleAddDeliverable}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
               </div>
 
-              {/* Selected deliverables */}
-              {deliverables.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {deliverables.map((deliverable, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {deliverable}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-auto p-0 ml-1"
-                        onClick={() => handleRemoveDeliverable(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
+              <div>
+                <Label htmlFor="service_type">Service Category</Label>
+                <Select
+                  value={formData.service_type}
+                  onValueChange={(value) => setFormData({ ...formData, service_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a service category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Describe your service requirements in detail..."
+                  rows={4}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Category-specific guidance */}
+            {selectedCategory && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{selectedCategory.name} - Typical Deliverables</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedCategory.default_deliverables.map((deliverable, index) => (
+                      <Badge key={index} variant="outline">
+                        {deliverable}
+                      </Badge>
+                    ))}
+                  </div>
+                  {selectedCategory.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedCategory.description}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Budget Range */}
+            <div className="space-y-4">
+              <Label>Budget Range (Optional)</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="budget_min" className="text-sm">Minimum ($)</Label>
+                  <Input
+                    id="budget_min"
+                    type="number"
+                    min="0"
+                    value={formData.budget_min}
+                    onChange={(e) => setFormData({ ...formData, budget_min: e.target.value })}
+                    placeholder="Min budget"
+                  />
                 </div>
+                <div>
+                  <Label htmlFor="budget_max" className="text-sm">Maximum ($)</Label>
+                  <Input
+                    id="budget_max"
+                    type="number"
+                    min="0"
+                    value={formData.budget_max}
+                    onChange={(e) => setFormData({ ...formData, budget_max: e.target.value })}
+                    placeholder="Max budget"
+                  />
+                </div>
+              </div>
+              
+              {selectedCategory?.expected_budget_range && (
+                <p className="text-sm text-muted-foreground">
+                  Typical range for {selectedCategory.name}: ${selectedCategory.expected_budget_range.min} - ${selectedCategory.expected_budget_range.max}
+                </p>
               )}
             </div>
 
             {/* Deadline */}
-            <div className="space-y-2">
-              <Label htmlFor="end_date">Deadline</Label>
-              <Input
-                type="date"
-                {...form.register('end_date')}
-              />
+            <div>
+              <Label>Deadline (Optional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.deadline && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.deadline ? format(formData.deadline, "PPP") : "Select deadline"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={formData.deadline}
+                    onSelect={(date) => setFormData({ ...formData, deadline: date })}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
-            {/* Budget */}
-            <div className="space-y-2">
-              <Label htmlFor="budget">Proposed Budget (Optional)</Label>
-              <div className="flex gap-2">
-                <Select defaultValue="USD" onValueChange={(value) => form.setValue('currency', value)}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="ZWL">ZWL</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="number"
-                  step="0.01"
-                  {...form.register('proposed_budget', { valueAsNumber: true })}
-                  placeholder="Enter proposed budget"
-                />
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4">
+            {/* Submit */}
+            <div className="flex justify-end space-x-2">
               <Button
                 type="button"
                 variant="outline"
@@ -248,7 +234,7 @@ export const CreateServiceRequestModal: React.FC<CreateServiceRequestModalProps>
               </Button>
               <Button
                 type="submit"
-                disabled={createServiceRequest.isPending || !selectedCategory}
+                disabled={createServiceRequest.isPending}
               >
                 {createServiceRequest.isPending ? 'Creating...' : 'Create Request'}
               </Button>
