@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,9 +16,25 @@ import {
   CheckCircle,
   AlertCircle,
   Settings,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+  </div>
+);
+
+// Error component
+const ErrorDisplay = ({ message }: { message: string }) => (
+  <div className="flex items-center justify-center p-8 text-red-400">
+    <AlertCircle className="h-5 w-5 mr-2" />
+    <span>{message}</span>
+  </div>
+);
 
 export default function ServiceManagement() {
   return (
@@ -134,7 +150,9 @@ export default function ServiceManagement() {
             <CardTitle>Service Requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <ServiceRequestsList />
+            <Suspense fallback={<LoadingSpinner />}>
+              <ServiceRequestsList />
+            </Suspense>
           </CardContent>
         </GlassCard>
 
@@ -144,7 +162,9 @@ export default function ServiceManagement() {
             <CardTitle>Job Cards</CardTitle>
           </CardHeader>
           <CardContent>
-            <JobCardsList />
+            <Suspense fallback={<LoadingSpinner />}>
+              <JobCardsList />
+            </Suspense>
           </CardContent>
         </GlassCard>
       </div>

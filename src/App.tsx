@@ -34,6 +34,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -68,33 +69,33 @@ function App() {
                       </ProtectedRoute>
                     } />
 
-                    {/* Role-specific dashboards */}
-                    <Route path="/entrepreneur" element={
+                    {/* Role-specific dashboards - Fixed route paths */}
+                    <Route path="/entrepreneur-dashboard" element={
                       <ProtectedRoute allowedRoles={['entrepreneur']}>
                         <EntrepreneurDashboard />
                       </ProtectedRoute>
                     } />
                     
-                    <Route path="/investor" element={
+                    <Route path="/investor-dashboard" element={
                       <ProtectedRoute allowedRoles={['investor']}>
                         <InvestorDashboard />
                       </ProtectedRoute>
                     } />
                     
-                    <Route path="/service-provider" element={
+                    <Route path="/service-provider-dashboard" element={
                       <ProtectedRoute allowedRoles={['service_provider']}>
                         <ServiceProviderDashboard />
                       </ProtectedRoute>
                     } />
                     
-                    <Route path="/observer" element={
+                    <Route path="/observer-dashboard" element={
                       <ProtectedRoute allowedRoles={['observer']}>
                         <ObserverDashboard />
                       </ProtectedRoute>
                     } />
 
-                    {/* Admin routes */}
-                    <Route path="/admin" element={
+                    {/* Admin routes - Fixed route paths */}
+                    <Route path="/admin-dashboard" element={
                       <ProtectedRoute allowedRoles={['super_admin']}>
                         <AdminDashboard />
                       </ProtectedRoute>

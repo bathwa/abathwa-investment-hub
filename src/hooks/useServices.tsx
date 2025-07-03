@@ -6,6 +6,25 @@ import { useErrorHandler } from './useErrorHandler';
 import { toast } from 'sonner';
 import type { ServiceCategory, ServiceRequest, WorkOrder, JobCard, ServiceNegotiation, JobCardStatus, WorkOrderStatus, PaymentStatus, NegotiationStatus, ProgressNote, JobCardAttachment, ServiceRequestStatus } from '@/types/services';
 
+// Type guard functions for safe JSON parsing
+const isProgressNote = (obj: any): obj is ProgressNote => {
+  return obj && typeof obj === 'object' && 'note' in obj && 'timestamp' in obj;
+};
+
+const isJobCardAttachment = (obj: any): obj is JobCardAttachment => {
+  return obj && typeof obj === 'object' && 'name' in obj && 'url' in obj;
+};
+
+const parseProgressNotes = (data: any): ProgressNote[] => {
+  if (!Array.isArray(data)) return [];
+  return data.filter(isProgressNote);
+};
+
+const parseJobCardAttachments = (data: any): JobCardAttachment[] => {
+  if (!Array.isArray(data)) return [];
+  return data.filter(isJobCardAttachment);
+};
+
 export const useServices = () => {
   const { handleError } = useErrorHandler();
   const queryClient = useQueryClient();
@@ -23,7 +42,6 @@ export const useServices = () => {
 
           if (error) throw error;
           
-          // Type cast the Json fields to proper types
           return (data || []).map(category => ({
             ...category,
             mandatory_fields: Array.isArray(category.mandatory_fields) 
@@ -38,6 +56,7 @@ export const useServices = () => {
           }));
         } catch (error) {
           console.error('Error fetching service categories:', error);
+          handleError(error as Error);
           return [];
         }
       },
@@ -57,7 +76,6 @@ export const useServices = () => {
 
           if (error) throw error;
           
-          // Type cast the Json fields to proper types
           return (data || []).map(request => ({
             ...request,
             status: request.status as ServiceRequestStatus,
@@ -67,6 +85,7 @@ export const useServices = () => {
           }));
         } catch (error) {
           console.error('Error fetching service requests:', error);
+          handleError(error as Error);
           return [];
         }
       },
@@ -86,7 +105,6 @@ export const useServices = () => {
 
           if (error) throw error;
           
-          // Type cast the Json fields to proper types
           return (data || []).map(request => ({
             ...request,
             status: request.status as ServiceRequestStatus,
@@ -96,6 +114,7 @@ export const useServices = () => {
           }));
         } catch (error) {
           console.error('Error fetching incoming service requests:', error);
+          handleError(error as Error);
           return [];
         }
       },
@@ -115,7 +134,6 @@ export const useServices = () => {
 
           if (error) throw error;
           
-          // Type cast the Json fields to proper types
           return (data || []).map(order => ({
             ...order,
             status: order.status as WorkOrderStatus,
@@ -126,6 +144,7 @@ export const useServices = () => {
           }));
         } catch (error) {
           console.error('Error fetching work orders:', error);
+          handleError(error as Error);
           return [];
         }
       },
@@ -151,19 +170,15 @@ export const useServices = () => {
 
           if (error) throw error;
           
-          // Type cast the Json fields to proper types
           return (data || []).map(card => ({
             ...card,
             status: card.status as JobCardStatus,
-            progress_notes: Array.isArray(card.progress_notes)
-              ? (card.progress_notes as unknown) as ProgressNote[]
-              : [],
-            attachments: Array.isArray(card.attachments)
-              ? (card.attachments as unknown) as JobCardAttachment[]
-              : []
+            progress_notes: parseProgressNotes(card.progress_notes),
+            attachments: parseJobCardAttachments(card.attachments)
           }));
         } catch (error) {
           console.error('Error fetching job cards:', error);
+          handleError(error as Error);
           return [];
         }
       },
@@ -183,7 +198,6 @@ export const useServices = () => {
 
           if (error) throw error;
           
-          // Type cast the Json fields to proper types
           return (data || []).map(negotiation => ({
             ...negotiation,
             status: negotiation.status as NegotiationStatus,
@@ -193,6 +207,7 @@ export const useServices = () => {
           }));
         } catch (error) {
           console.error('Error fetching service negotiations:', error);
+          handleError(error as Error);
           return [];
         }
       },
@@ -203,13 +218,16 @@ export const useServices = () => {
   const createServiceRequest = useMutation({
     mutationFn: async (data: Partial<ServiceRequest>) => {
       try {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user.user) throw new Error('User not authenticated');
+
         const { data: result, error } = await supabase
           .from('service_requests')
           .insert({
             title: data.title,
             description: data.description,
             service_type: data.service_type,
-            requester_id: (await supabase.auth.getUser()).data.user?.id,
+            requester_id: user.user.id,
             budget_range: data.budget_range,
             deadline: data.deadline,
             status: 'open'
@@ -224,7 +242,7 @@ export const useServices = () => {
         return result;
       } catch (error) {
         console.error('Error creating service request:', error);
-        toast.error('Failed to create service request');
+        handleError(error as Error);
         throw error;
       }
     },
@@ -233,11 +251,14 @@ export const useServices = () => {
   const acceptServiceRequest = useMutation({
     mutationFn: async (data: { requestId: string }) => {
       try {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user.user) throw new Error('User not authenticated');
+
         const { data: result, error } = await supabase
           .from('service_requests')
           .update({
             status: 'assigned',
-            provider_id: (await supabase.auth.getUser()).data.user?.id,
+            provider_id: user.user.id,
           })
           .eq('id', data.requestId)
           .select()
@@ -251,7 +272,7 @@ export const useServices = () => {
         return result;
       } catch (error) {
         console.error('Error accepting service request:', error);
-        toast.error('Failed to accept service request');
+        handleError(error as Error);
         throw error;
       }
     },
@@ -260,11 +281,14 @@ export const useServices = () => {
   const createWorkOrder = useMutation({
     mutationFn: async (data: Partial<WorkOrder>) => {
       try {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user.user) throw new Error('User not authenticated');
+
         const { data: result, error } = await supabase
           .from('work_orders')
           .insert({
             service_request_id: data.service_request_id,
-            service_provider_id: (await supabase.auth.getUser()).data.user?.id,
+            service_provider_id: user.user.id,
             agreed_scope: data.agreed_scope,
             agreed_deliverables: data.agreed_deliverables,
             agreed_start_date: data.agreed_start_date,
@@ -283,7 +307,7 @@ export const useServices = () => {
         return result;
       } catch (error) {
         console.error('Error creating work order:', error);
-        toast.error('Failed to create work order');
+        handleError(error as Error);
         throw error;
       }
     },
@@ -313,7 +337,7 @@ export const useServices = () => {
         return result;
       } catch (error) {
         console.error('Error creating job card:', error);
-        toast.error('Failed to create job card');
+        handleError(error as Error);
         throw error;
       }
     },
@@ -322,7 +346,6 @@ export const useServices = () => {
   const updateJobCard = useMutation({
     mutationFn: async (data: { id: string; updates: Partial<JobCard> }) => {
       try {
-        // Convert typed arrays back to Json for database storage
         const dbUpdates: any = { ...data.updates };
         if (dbUpdates.progress_notes) {
           dbUpdates.progress_notes = dbUpdates.progress_notes as unknown;
@@ -345,7 +368,7 @@ export const useServices = () => {
         return result;
       } catch (error) {
         console.error('Error updating job card:', error);
-        toast.error('Failed to update job card');
+        handleError(error as Error);
         throw error;
       }
     },
@@ -369,7 +392,7 @@ export const useServices = () => {
         return result;
       } catch (error) {
         console.error('Error updating service request status:', error);
-        toast.error('Failed to update service request status');
+        handleError(error as Error);
         throw error;
       }
     },
