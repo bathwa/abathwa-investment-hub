@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from './useErrorHandler';
 import { toast } from 'sonner';
-import type { ServiceCategory, ServiceRequest, WorkOrder, JobCard, ServiceNegotiation } from '@/types/services';
+import type { ServiceCategory, ServiceRequest, WorkOrder, JobCard, ServiceNegotiation, JobCardStatus, WorkOrderStatus, PaymentStatus, NegotiationStatus, ProgressNote, JobCardAttachment, ServiceRequestStatus } from '@/types/services';
 
 export const useServices = () => {
   const { handleError } = useErrorHandler();
@@ -22,7 +21,20 @@ export const useServices = () => {
             .order('name');
 
           if (error) throw error;
-          return data || [];
+          
+          // Type cast the Json fields to proper types
+          return (data || []).map(category => ({
+            ...category,
+            mandatory_fields: Array.isArray(category.mandatory_fields) 
+              ? category.mandatory_fields as string[]
+              : [],
+            default_deliverables: Array.isArray(category.default_deliverables)
+              ? category.default_deliverables as string[]
+              : [],
+            expected_budget_range: (category.expected_budget_range && typeof category.expected_budget_range === 'object')
+              ? category.expected_budget_range as { min: number; max: number }
+              : { min: 0, max: 0 }
+          }));
         } catch (error) {
           console.error('Error fetching service categories:', error);
           return [];
@@ -43,7 +55,15 @@ export const useServices = () => {
             .order('created_at', { ascending: false });
 
           if (error) throw error;
-          return data || [];
+          
+          // Type cast the Json fields to proper types
+          return (data || []).map(request => ({
+            ...request,
+            status: request.status as ServiceRequestStatus,
+            budget_range: (request.budget_range && typeof request.budget_range === 'object')
+              ? request.budget_range as { min: number; max: number }
+              : { min: 0, max: 0 }
+          }));
         } catch (error) {
           console.error('Error fetching service requests:', error);
           return [];
@@ -64,7 +84,15 @@ export const useServices = () => {
             .order('created_at', { ascending: false });
 
           if (error) throw error;
-          return data || [];
+          
+          // Type cast the Json fields to proper types
+          return (data || []).map(request => ({
+            ...request,
+            status: request.status as ServiceRequestStatus,
+            budget_range: (request.budget_range && typeof request.budget_range === 'object')
+              ? request.budget_range as { min: number; max: number }
+              : { min: 0, max: 0 }
+          }));
         } catch (error) {
           console.error('Error fetching incoming service requests:', error);
           return [];
@@ -85,7 +113,16 @@ export const useServices = () => {
             .order('created_at', { ascending: false });
 
           if (error) throw error;
-          return data || [];
+          
+          // Type cast the Json fields to proper types
+          return (data || []).map(order => ({
+            ...order,
+            status: order.status as WorkOrderStatus,
+            payment_status: order.payment_status as PaymentStatus,
+            agreed_deliverables: Array.isArray(order.agreed_deliverables)
+              ? order.agreed_deliverables as string[]
+              : []
+          }));
         } catch (error) {
           console.error('Error fetching work orders:', error);
           return [];
@@ -112,7 +149,18 @@ export const useServices = () => {
           const { data, error } = await query;
 
           if (error) throw error;
-          return data || [];
+          
+          // Type cast the Json fields to proper types
+          return (data || []).map(card => ({
+            ...card,
+            status: card.status as JobCardStatus,
+            progress_notes: Array.isArray(card.progress_notes)
+              ? card.progress_notes as ProgressNote[]
+              : [],
+            attachments: Array.isArray(card.attachments)
+              ? card.attachments as JobCardAttachment[]
+              : []
+          }));
         } catch (error) {
           console.error('Error fetching job cards:', error);
           return [];
@@ -133,7 +181,15 @@ export const useServices = () => {
             .order('created_at', { ascending: false });
 
           if (error) throw error;
-          return data || [];
+          
+          // Type cast the Json fields to proper types
+          return (data || []).map(negotiation => ({
+            ...negotiation,
+            status: negotiation.status as NegotiationStatus,
+            proposed_deliverables: Array.isArray(negotiation.proposed_deliverables)
+              ? negotiation.proposed_deliverables as string[]
+              : []
+          }));
         } catch (error) {
           console.error('Error fetching service negotiations:', error);
           return [];

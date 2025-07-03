@@ -1,4 +1,3 @@
-
 // Service Management Types matching the actual database schema
 
 export interface ServiceCategory {
@@ -90,3 +89,10 @@ export type WorkOrderStatus = 'in_progress' | 'pending_delivery' | 'delivered' |
 export type PaymentStatus = 'unpaid' | 'pending_payment' | 'paid';
 export type JobCardStatus = 'not_started' | 'in_progress' | 'awaiting_client_input' | 'completed' | 'blocked';
 export type NegotiationStatus = 'pending' | 'accepted' | 'declined' | 'superseded';
+
+export interface CreateJobCardData {
+  work_order_id: string;
+  title: string;
+  description?: string;
+  due_date?: string;
+}
