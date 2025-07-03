@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -155,10 +156,10 @@ export const useServices = () => {
             ...card,
             status: card.status as JobCardStatus,
             progress_notes: Array.isArray(card.progress_notes)
-              ? card.progress_notes as ProgressNote[]
+              ? (card.progress_notes as unknown) as ProgressNote[]
               : [],
             attachments: Array.isArray(card.attachments)
-              ? card.attachments as JobCardAttachment[]
+              ? (card.attachments as unknown) as JobCardAttachment[]
               : []
           }));
         } catch (error) {
@@ -321,9 +322,18 @@ export const useServices = () => {
   const updateJobCard = useMutation({
     mutationFn: async (data: { id: string; updates: Partial<JobCard> }) => {
       try {
+        // Convert typed arrays back to Json for database storage
+        const dbUpdates: any = { ...data.updates };
+        if (dbUpdates.progress_notes) {
+          dbUpdates.progress_notes = dbUpdates.progress_notes as unknown;
+        }
+        if (dbUpdates.attachments) {
+          dbUpdates.attachments = dbUpdates.attachments as unknown;
+        }
+
         const { data: result, error } = await supabase
           .from('job_cards')
-          .update(data.updates)
+          .update(dbUpdates)
           .eq('id', data.id)
           .select()
           .single();
