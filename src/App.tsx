@@ -45,8 +45,8 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <LanguageProvider>
-            <AuthProvider>
-              <Router>
+            <Router>
+              <AuthProvider>
                 <div className="min-h-screen bg-background">
                   <Routes>
                     {/* Public routes */}
@@ -69,33 +69,33 @@ function App() {
                       </ProtectedRoute>
                     } />
 
-                    {/* Role-specific dashboards - Fixed route paths */}
-                    <Route path="/entrepreneur-dashboard" element={
+                    {/* Role-specific dashboards */}
+                    <Route path="/entrepreneur" element={
                       <ProtectedRoute allowedRoles={['entrepreneur']}>
                         <EntrepreneurDashboard />
                       </ProtectedRoute>
                     } />
                     
-                    <Route path="/investor-dashboard" element={
+                    <Route path="/investor" element={
                       <ProtectedRoute allowedRoles={['investor']}>
                         <InvestorDashboard />
                       </ProtectedRoute>
                     } />
                     
-                    <Route path="/service-provider-dashboard" element={
+                    <Route path="/service-provider" element={
                       <ProtectedRoute allowedRoles={['service_provider']}>
                         <ServiceProviderDashboard />
                       </ProtectedRoute>
                     } />
                     
-                    <Route path="/observer-dashboard" element={
+                    <Route path="/observer" element={
                       <ProtectedRoute allowedRoles={['observer']}>
                         <ObserverDashboard />
                       </ProtectedRoute>
                     } />
 
-                    {/* Admin routes - Fixed route paths */}
-                    <Route path="/admin-dashboard" element={
+                    {/* Admin routes */}
+                    <Route path="/admin" element={
                       <ProtectedRoute allowedRoles={['super_admin']}>
                         <AdminDashboard />
                       </ProtectedRoute>
@@ -123,9 +123,9 @@ function App() {
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>
-              </Router>
-              <Toaster />
-            </AuthProvider>
+                <Toaster />
+              </AuthProvider>
+            </Router>
           </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>

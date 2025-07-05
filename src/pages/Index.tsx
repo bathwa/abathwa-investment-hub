@@ -35,13 +35,19 @@ const LoadingSpinner = () => (
 export default function Index() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-purple-950 text-white overflow-hidden relative">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+        </div>
+
         {/* Status Bar */}
-        <div className="flex justify-between items-center p-4 text-sm">
+        <div className="relative z-10 flex justify-between items-center p-4 text-sm bg-black/20 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <span>9:41</span>
+            <span className="font-medium">9:41</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 text-white/80">
             <Signal className="h-4 w-4" />
             <Wifi className="h-4 w-4" />
             <Battery className="h-4 w-4" />
@@ -49,18 +55,20 @@ export default function Index() {
         </div>
 
         {/* Header */}
-        <div className="px-6 py-4">
-          <div className="flex justify-between items-center mb-6">
+        <div className="relative z-10 px-4 sm:px-6 py-4">
+          <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
-              <p className="text-slate-400">Welcome back, User</p>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                Abathwa Hub
+              </h1>
+              <p className="text-slate-300 text-sm sm:text-base">Investment Community Platform</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
-              <Button size="icon" variant="ghost" className="rounded-full">
+              <Button size="icon" variant="ghost" className="rounded-full hover:bg-white/10">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Button size="icon" variant="ghost" className="rounded-full">
+              <Button size="icon" variant="ghost" className="rounded-full hover:bg-white/10">
                 <User className="h-5 w-5" />
               </Button>
             </div>
