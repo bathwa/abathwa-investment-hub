@@ -64,8 +64,6 @@ export function sanitizeUserData(user: any): Partial<User> {
     id: user.id,
     email: user.email || 'unknown@email.com',
     full_name: user.full_name || 'Unknown User',
-    first_name: user.first_name,
-    last_name: user.last_name,
     phone: user.phone,
     role: user.role,
     status: user.status,
